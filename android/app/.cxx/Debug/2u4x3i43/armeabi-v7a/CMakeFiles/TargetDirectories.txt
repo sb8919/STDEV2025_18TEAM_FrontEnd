@@ -1,0 +1,2 @@
+C:/Users/sb891/Desktop/medit/medit/android/app/.cxx/Debug/2u4x3i43/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/sb891/Desktop/medit/medit/android/app/.cxx/Debug/2u4x3i43/armeabi-v7a/CMakeFiles/rebuild_cache.dir
