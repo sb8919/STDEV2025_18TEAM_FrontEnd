@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'intro_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,6 +21,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(seconds: 2),
       vsync: this,
     );
+
     _animation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeInOut,
@@ -26,11 +29,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const IntroScreen()),
-      );
+    // 2초 후에 인트로 또는 홈 화면으로 이동
+    Future.delayed(const Duration(seconds: 2), () {
+      _checkFirstTime();
     });
+  }
+
+  Future<void> _checkFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    // 테스트를 위해 강제로 true로 설정
+    final isFirstTime = true; // prefs.getBool('isFirstTime') ?? true;
+
+    if (mounted) {
+      if (isFirstTime) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const IntroScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    }
   }
 
   @override
@@ -49,20 +71,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // TODO: Replace with your app logo
-              const Icon(
-                Icons.medical_services,
-                size: 100,
-                color: Colors.blue,
+              Image.asset(
+                'assets/images/logos/logo.png',
+                width: 150,
+                height: 150,
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Medit',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
+              Image.asset(
+                'assets/images/logos/text_logo.png',
+                width: 200,
               ),
             ],
           ),
