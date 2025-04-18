@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
 class CardSlider extends StatefulWidget {
   final List<Map<String, String>> cardData;
@@ -22,92 +23,73 @@ class _CardSliderState extends State<CardSlider> {
       height: 280,
       child: Stack(
         children: [
-          _buildPageView(),
-          _buildPageIndicator(),
-          _buildTitle(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPageView() {
-    return Positioned.fill(
-      child: PageView.builder(
-        controller: _pageController,
-        itemCount: widget.cardData.length,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
-        itemBuilder: (context, index) {
-          return _buildCard(widget.cardData[index]);
-        },
-      ),
-    );
-  }
-
-  Widget _buildCard(Map<String, String> data) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: ClipRRect(
-        child: Image.asset(
-          data['image']!,
-          width: double.infinity,
-          height: 260,
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPageIndicator() {
-    return Positioned(
-      bottom: 20,
-      left: 0,
-      right: 0,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(
-          widget.cardData.length,
-          (index) => _buildIndicatorDot(index),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIndicatorDot(int index) {
-    return Container(
-      width: 8,
-      height: 8,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: index == _currentPage
-            ? const Color(0xFF5A42F8)
-            : Colors.white.withOpacity(0.5),
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return Positioned(
-      bottom: 50,
-      left: 20,
-      child: Text(
-        widget.cardData[_currentPage]['title']!,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          shadows: [
-            Shadow(
-              offset: Offset(0, 1),
-              blurRadius: 2,
-              color: Colors.black38,
+          Positioned.fill(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: widget.cardData.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final data = widget.cardData[index];
+                return Card(
+                  margin: EdgeInsets.zero,
+                  child: ClipRRect(
+                    child: Image.asset(
+                      data['image']!,
+                      width: double.infinity,
+                      height: 260,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.cardData.length,
+                (index) => Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: index == _currentPage
+                        ? AppColors.primary
+                        : AppColors.textWhite.withOpacity(0.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 50,
+            left: 20,
+            child: Text(
+              widget.cardData[_currentPage]['title']!,
+              style: TextStyle(
+                color: AppColors.textWhite,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    offset: const Offset(0, 1),
+                    blurRadius: 2,
+                    color: AppColors.shadow,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

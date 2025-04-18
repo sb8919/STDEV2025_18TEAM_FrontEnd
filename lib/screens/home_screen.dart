@@ -4,6 +4,7 @@ import 'profile_screen.dart';
 import 'card_news_screen.dart';
 import '../components/card_slider.dart';
 import '../constants/card_data.dart';
+import '../constants/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,8 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Stack(
@@ -57,8 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 26),
-            child: const Divider(
-              color: Colors.grey,
+            child: Divider(
+              color: AppColors.dividerColor,
               thickness: 1,
               height: 0,
             ),
@@ -69,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.background,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -84,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: 0,
-        selectedItemColor: const Color(0xFF005BAC),
+        selectedItemColor: AppColors.secondary,
       ),
     );
   }
@@ -105,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title,
               style: TextStyle(
                 fontSize: 14,
-                color: isSelected ? const Color(0xFF5A42F8) : Colors.black,
+                color: isSelected ? AppColors.primary : AppColors.secondary.withOpacity(0.5),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),

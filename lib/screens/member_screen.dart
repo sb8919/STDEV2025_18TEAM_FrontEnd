@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/member_data.dart';
+import '../constants/app_colors.dart';
+import '../components/member_detail_card.dart';
 
 class MemberScreen extends StatefulWidget {
   const MemberScreen({super.key});
@@ -9,6 +11,7 @@ class MemberScreen extends StatefulWidget {
 }
 
 class _MemberScreenState extends State<MemberScreen> {
+  Member? _selectedMember;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _relationshipController = TextEditingController();
 
@@ -16,6 +19,7 @@ class _MemberScreenState extends State<MemberScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppColors.background,
         title: const Text('구성원 추가하기'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -62,7 +66,10 @@ class _MemberScreenState extends State<MemberScreen> {
                 _relationshipController.clear();
               }
             },
-            child: const Text('추가'),
+            child: Text(
+              '추가',
+              style: TextStyle(color: AppColors.primary),
+            ),
           ),
         ],
       ),
@@ -80,11 +87,31 @@ class _MemberScreenState extends State<MemberScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ...members.map((member) => _buildMemberCard(member)).toList(),
+        const SizedBox(height: 20),
+        ...members.map((member) {
+          final isSelected = _selectedMember == member;
+          return Column(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedMember = isSelected ? null : member;
+                  });
+                },
+                child: _buildMemberCard(member),
+              ),
+              if (isSelected) ...[
+                const SizedBox(height: 8),
+                MemberDetailCard(member: member),
+                const SizedBox(height: 8),
+              ],
+            ],
+          );
+        }).toList(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 26),
-          child: const Divider(
-            color: Colors.grey,
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 25),
+          child: Divider(
+            color: AppColors.dividerColor,
             thickness: 1,
             height: 0,
           ),
@@ -92,14 +119,14 @@ class _MemberScreenState extends State<MemberScreen> {
         InkWell(
           onTap: _showAddMemberDialog,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   '구성원 추가하기',
                   style: TextStyle(
-                    color: Colors.purple[200],
+                    color: AppColors.primary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -107,7 +134,7 @@ class _MemberScreenState extends State<MemberScreen> {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.add_circle_outline,
-                  color: Colors.purple[200],
+                  color: AppColors.primary,
                   size: 20,
                 ),
               ],
@@ -123,7 +150,7 @@ class _MemberScreenState extends State<MemberScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -158,9 +185,10 @@ class _MemberScreenState extends State<MemberScreen> {
   Widget _buildMemberName(Member member) {
     return Text(
       member.name,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
       ),
     );
   }
@@ -168,15 +196,18 @@ class _MemberScreenState extends State<MemberScreen> {
   Widget _buildMemberRelationship(Member member) {
     return Row(
       children: [
-        const Text(
+        Text(
           '관계 | ',
-          style: TextStyle(color: Colors.grey, fontSize: 11),
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 11,
+          ),
         ),
         Text(
           member.relationship,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w500,
-            color: Colors.grey,
+            color: AppColors.textSecondary,
             fontSize: 11,
           ),
         ),
