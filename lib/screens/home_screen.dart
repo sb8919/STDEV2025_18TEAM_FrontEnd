@@ -35,10 +35,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: Image.asset('assets/logo.png', height: 30),
+              child: Image.asset('assets/images/logos/logo.png', height: 30),
             ),
             Center(
-              child: Image.asset('assets/text_logo.png', height: 24),
+              child: Image.asset('assets/images/logos/text_logo.png', height: 24),
             ),
           ],
         ),

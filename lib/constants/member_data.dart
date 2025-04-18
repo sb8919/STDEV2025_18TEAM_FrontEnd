@@ -14,7 +14,7 @@ class Member {
   Member({
     required this.name,
     required this.relationship,
-    this.imagePath = 'assets/logo.png',
+    this.imagePath = 'assets/images/logos/logo.png',
     DateTime? recordDate,
     this.recentRecords = const [],
     this.nickname = '',
