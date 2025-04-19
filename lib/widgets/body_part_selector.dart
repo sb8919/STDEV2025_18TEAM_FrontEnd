@@ -1,13 +1,34 @@
 import 'package:flutter/material.dart';
 
 enum BodyPart {
+  none,
   head,
   body,
   leftArm,
   rightArm,
   leftLeg,
   rightLeg,
-  none
+}
+
+extension BodyPartExtension on BodyPart {
+  String get displayName {
+    switch (this) {
+      case BodyPart.none:
+        return '선택 안함';
+      case BodyPart.head:
+        return '머리';
+      case BodyPart.body:
+        return '몸통';
+      case BodyPart.leftArm:
+        return '왼팔';
+      case BodyPart.rightArm:
+        return '오른팔';
+      case BodyPart.leftLeg:
+        return '왼다리';
+      case BodyPart.rightLeg:
+        return '오른다리';
+    }
+  }
 }
 
 class BodyPartSelector extends StatefulWidget {

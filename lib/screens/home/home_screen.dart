@@ -41,7 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _bottomScreens = [
     const HomeScreen(),
     const CalendarScreen(),
-    const ChatOnboardingScreen(),
+    const Scaffold(
+      body: ChatOnboardingScreen(),
+    ),
   ];
 
   // 임시 데이터
@@ -236,11 +238,12 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       // 온보딩이 완료되지 않은 경우 온보딩 화면으로 이동
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (context) => const ChatOnboardingScreen(),
           ),
+          (route) => false,
         );
       }
     }
@@ -559,6 +562,12 @@ class _HomeScreenState extends State<HomeScreen> {
         weekDays: _weekDays,
         onDateSelected: _handleDateSelected,
       ) as PreferredSizeWidget;
+    }
+    if (_bottomNavIndex == 2) {
+      return PreferredSize(
+        preferredSize: Size.zero,
+        child: Container(),
+      );
     }
     return const DefaultAppBar();
   }

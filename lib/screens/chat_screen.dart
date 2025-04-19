@@ -3,14 +3,14 @@ import '../constants/app_colors.dart';
 import '../widgets/body_part_selector.dart';
 
 class ChatScreen extends StatefulWidget {
-  final BodyPart selectedBodyPart;
+  final Set<BodyPart> selectedBodyParts;
   final String symptom;
   final String duration;
   final double painIntensity;
 
   const ChatScreen({
     super.key,
-    required this.selectedBodyPart,
+    required this.selectedBodyParts,
     required this.symptom,
     required this.duration,
     required this.painIntensity,
@@ -24,53 +24,41 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   final ScrollController _scrollController = ScrollController();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _addInitialMessages();
+    _sendInitialMessage();
   }
 
-  void _addInitialMessages() {
-    String bodyPartName = _getBodyPartName(widget.selectedBodyPart);
-    _messages.add(
-      ChatMessage(
-        text: '현재 ${bodyPartName}에 통증을 느끼시는군요.\n'
-            '증상: ${widget.symptom}\n'
-            '기간: ${widget.duration}\n'
-            '통증 강도: ${widget.painIntensity.toStringAsFixed(1)}\n\n'
-            '추가적인 증상이 있으신가요?',
-        isUser: false,
-        options: ['숨쉬기 힘듦', '어지러움', '두통', '없음'],
-      ),
-    );
-    setState(() {});
+  void _sendInitialMessage() {
+    final bodyParts = widget.selectedBodyParts.map((part) {
+      switch (part) {
+        case BodyPart.head:
+          return '머리';
+        case BodyPart.body:
+          return '몸통';
+        case BodyPart.leftArm:
+          return '왼팔';
+        case BodyPart.rightArm:
+          return '오른팔';
+        case BodyPart.leftLeg:
+          return '왼다리';
+        case BodyPart.rightLeg:
+          return '오른다리';
+        default:
+          return '';
+      }
+    }).join(', ');
+
+    final message = '선택하신 부위는 $bodyParts 입니다. 어떤 증상이 있으신가요?';
+    _addMessage(message, isUser: false);
   }
 
-  String _getBodyPartName(BodyPart part) {
-    switch (part) {
-      case BodyPart.head:
-        return '머리';
-      case BodyPart.body:
-        return '몸통';
-      case BodyPart.leftArm:
-        return '왼팔';
-      case BodyPart.rightArm:
-        return '오른팔';
-      case BodyPart.leftLeg:
-        return '왼다리';
-      case BodyPart.rightLeg:
-        return '오른다리';
-      case BodyPart.none:
-        return '선택된 부위';
-    }
-  }
-
-  void _handleSubmitted(String text) {
-    if (text.isEmpty) return;
-
+  void _addMessage(String text, {bool isUser = true}) {
     setState(() {
-      _messages.add(ChatMessage(text: text, isUser: true));
+      _messages.add(ChatMessage(text: text, isUser: isUser));
     });
     _messageController.clear();
 
@@ -184,6 +172,54 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  void _handleSubmitted(String text) {
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: true));
+    });
+    _messageController.clear();
+
+    // 첫 번째 AI 응답
+    Future.delayed(const Duration(milliseconds: 800), () {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: '말씀해 주신 증상으로 보아\n다음과 같은 질환을 의심해볼 수 있습니다:\n\n'
+                '1. XX 증후군 (60%)\n'
+                '2. YY 질환 (30%)\n'
+                '3. ZZ 증상 (10%)\n\n'
+                '정확한 진단을 위해 전문의 상담을 추천드립니다.',
+            isUser: false,
+          ),
+        );
+      });
+    });
+
+    // 두 번째 AI 응답
+    Future.delayed(const Duration(milliseconds: 1600), () {
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: '근처에 있는 전문병원을 찾아보시겠어요?',
+            isUser: false,
+            showMap: true,
+            mapOptions: ['예', '아니요'],
+          ),
+        );
+      });
+    });
+
+    // 스크롤을 맨 아래로 이동
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 }
 
