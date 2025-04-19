@@ -70,12 +70,16 @@ class Acquaintance {
   final String relationship;
   final String imagePath;
   final HealthMetrics healthMetrics;
+  final int age;
+  final String gender;
 
   const Acquaintance({
     required this.name,
     required this.relationship,
     required this.imagePath,
     required this.healthMetrics,
+    required this.age,
+    required this.gender,
   });
 
   Acquaintance copyWith({
@@ -83,12 +87,16 @@ class Acquaintance {
     String? relationship,
     String? imagePath,
     HealthMetrics? healthMetrics,
+    int? age,
+    String? gender,
   }) {
     return Acquaintance(
       name: name ?? this.name,
       relationship: relationship ?? this.relationship,
       imagePath: imagePath ?? this.imagePath,
       healthMetrics: healthMetrics ?? this.healthMetrics,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
     );
   }
 }

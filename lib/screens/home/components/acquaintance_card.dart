@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/member.dart';
 import '../../../screens/edit_relationship_screen.dart';
+import '../../../utils/profile_image_utils.dart';
 import 'health_metric_bar.dart';
 
 class AcquaintanceCard extends StatelessWidget {
@@ -46,11 +47,7 @@ class AcquaintanceCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Image.asset(
-                    acquaintance.imagePath,
-                    width: 40,
-                    height: 40,
-                  ),
+                  buildProfileCircle(acquaintance.gender, acquaintance.age, size: 40),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

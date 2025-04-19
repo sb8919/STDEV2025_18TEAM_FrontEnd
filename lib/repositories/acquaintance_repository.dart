@@ -11,11 +11,13 @@ class AcquaintanceRepository {
       if (userDataString != null) {
         final userData = jsonDecode(userDataString);
         if (userData['loginId'] == loginId) {
-          final acquaintances = (userData['acquaintances'] as List)
+          final List<Acquaintance> acquaintances = (userData['acquaintances'] as List)
               .map((a) => Acquaintance(
                     name: a['name'],
                     relationship: a['relationship'],
                     imagePath: a['imagePath'],
+                    age: a['age'] ?? 25,
+                    gender: a['gender'] ?? '남',
                     healthMetrics: HealthMetrics(
                       metrics: (a['healthMetrics']['metrics'] as List)
                           .map((m) => MetricData(
@@ -49,6 +51,8 @@ class AcquaintanceRepository {
                   'name': a['name'],
                   'relationship': a['relationship'],
                   'imagePath': a['imagePath'],
+                  'age': a['age'] ?? 25,
+                  'gender': a['gender'] ?? '남',
                   'healthMetrics': {
                     'metrics': (a['healthMetrics']['metrics'] as List)
                         .map((m) => {
@@ -70,6 +74,8 @@ class AcquaintanceRepository {
             'name': acquaintance.name,
             'relationship': acquaintance.relationship,
             'imagePath': acquaintance.imagePath,
+            'age': acquaintance.age,
+            'gender': acquaintance.gender,
             'healthMetrics': {
               'metrics': acquaintance.healthMetrics.metrics
                   .map((m) => {

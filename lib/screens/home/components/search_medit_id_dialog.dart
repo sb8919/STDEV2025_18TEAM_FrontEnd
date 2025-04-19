@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/api_service.dart';
+import '../../../utils/profile_image_utils.dart';
 
 class SearchMeditIdDialog extends StatefulWidget {
   final Function(Map<String, dynamic>) onUserSelected;
@@ -87,7 +88,7 @@ class _SearchMeditIdDialogState extends State<SearchMeditIdDialog> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'user123',
+                hintText: '아이디를 입력하세요',
                 suffixIcon: _isLoading
                     ? const SizedBox(
                         width: 20,
@@ -135,7 +136,9 @@ class _SearchMeditIdDialogState extends State<SearchMeditIdDialog> {
               const SizedBox(height: 20),
               Container(
                 width: double.infinity,
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
+                  color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -143,11 +146,7 @@ class _SearchMeditIdDialogState extends State<SearchMeditIdDialog> {
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey[300],
-                          child: Image.asset('assets/images/charactor/medit_circle.png'),
-                        ),
+                        buildProfileCircle(_searchResult!['gender'] ?? '남', _searchResult!['age'] ?? 25, size: 40),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -184,7 +183,28 @@ class _SearchMeditIdDialogState extends State<SearchMeditIdDialog> {
                         ),
                       ],
                     ),
-
+                    const SizedBox(height: 12),
+                    if (_searchResult!['email'] != null) ...[
+                      Text(
+                        '이메일: ${_searchResult!['email']}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    if (_searchResult!['phone'] != null) ...[
+                      Text(
+                        '전화번호: ${_searchResult!['phone']}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),

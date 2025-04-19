@@ -7,6 +7,7 @@ import '../widgets/body_part_selector.dart';
 import '../widgets/pain_intensity_slider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:convert';
+import '../utils/profile_image_utils.dart';
 
 class ChatScreen extends StatefulWidget {
   final Set<BodyPart> selectedBodyParts;
@@ -1065,13 +1066,7 @@ class ChatMessage {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/charactor/medit_circle.png',
-                      width: 46,
-                      height: 46,
-                    ),
-                  ),
+                  buildProfileCircle('남', 25, size: 46),
                   const SizedBox(width: 8),
                   const Text(
                     '메딧톡',
@@ -1208,13 +1203,7 @@ class ChatMessage {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                ClipOval(
-                  child: Image.asset(
-                    'assets/images/charactor/medit_circle.png',
-                    width: 46,
-                    height: 46,
-                  ),
-                ),
+                buildProfileCircle('남', 25, size: 46),
                 const SizedBox(width: 8),
                 const Text(
                   '메딧톡',

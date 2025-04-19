@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_colors.dart';
 import '../../../models/member.dart';
+import '../../../utils/profile_image_utils.dart';
 
 class ProfileCard extends StatefulWidget {
   final Member member;
@@ -122,11 +123,7 @@ class _ProfileCardState extends State<ProfileCard> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: widget.member.isMainProfile ? AppColors.primary : Colors.grey[300],
-              child: Image.asset('assets/images/charactor/medit_circle.png'),
-            ),
+            buildProfileCircle(widget.member.gender, widget.member.age, size: 40),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

@@ -128,17 +128,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<CardNews> newsList = [
     CardNews(
       title: "술마시고 두통, 타이레놀 먹어도 될까요?",
-      iconPath: "assets/images/logos/logo.png",
+      iconPath: "assets/images/icon/beer.png",
       date: "2024.03.20",
     ),
     CardNews(
       title: "헷갈리는 감기 vs 독감 차이 3초만에 확인하기",
-      iconPath: "assets/images/logos/logo.png",
+      iconPath: "assets/images/icon/Cheers.png",
       date: "2024.03.20",
     ),
     CardNews(
       title: "이 증상 알고 보니 코로나일 수 있다?",
-      iconPath: "assets/images/logos/logo.png",
+      iconPath: "assets/images/icon/Research.png",
       date: "2024.03.20",
     ),
   ];
@@ -319,6 +319,8 @@ class _HomeScreenState extends State<HomeScreen> {
       name: userData['nickname'] ?? '',
       relationship: userData['relationship'] ?? '지인',
       imagePath: 'assets/images/charactor/medit_circle.png',
+      age: userData['age'] ?? 25,
+      gender: userData['gender'] ?? '남',
       healthMetrics: HealthMetrics(
         metrics: [
           MetricData(

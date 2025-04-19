@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../models/member.dart';
 
 class AddAcquaintanceDialog extends StatefulWidget {
-  final Function(Acquaintance) onAdd;
+  final Function(Map<String, dynamic>) onAddAcquaintance;
 
   const AddAcquaintanceDialog({
     super.key,
-    required this.onAdd,
+    required this.onAddAcquaintance,
   });
 
   @override
@@ -14,144 +14,144 @@ class AddAcquaintanceDialog extends StatefulWidget {
 }
 
 class _AddAcquaintanceDialogState extends State<AddAcquaintanceDialog> {
-  final _nameController = TextEditingController();
-  final _relationshipController = TextEditingController();
-  String _selectedSymptom = '편두통';
-  double _symptomValue = 0.7;
-  int _severityLevel = 2;
+  final TextEditingController _nicknameController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  String _selectedGender = '남';
+  String _selectedRelationship = '지인';
 
-  final List<String> _symptoms = ['편두통', '불안감', '근육통', '어지러움', '불면증'];
+  final List<String> _relationships = [
+    '미성년 자녀',
+    '가족',
+    '부모',
+    '자녀',
+    '배우자',
+    '형제/자매',
+    '친척',
+    '친구',
+    '지인',
+  ];
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _relationshipController.dispose();
-    super.dispose();
-  }
-
-  void _handleAdd() {
-    if (_nameController.text.isEmpty || _relationshipController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('모든 필드를 입력해주세요.')),
-      );
+  void _handleSubmit() {
+    if (_nicknameController.text.isEmpty || _ageController.text.isEmpty) {
       return;
     }
 
-    final newAcquaintance = Acquaintance(
-      name: _nameController.text,
-      relationship: _relationshipController.text,
-      imagePath: 'assets/images/charactor/medit_circle.png',
-      healthMetrics: HealthMetrics(
-        metrics: [
-          MetricData(
-            name: _selectedSymptom,
-            value: _symptomValue,
-            severityLevel: _severityLevel,
-          ),
-        ],
-      ),
-    );
+    final newAcquaintance = {
+      'nickname': _nicknameController.text,
+      'relationship': _selectedRelationship,
+      'age': int.tryParse(_ageController.text) ?? 25,
+      'gender': _selectedGender,
+    };
 
-    widget.onAdd(newAcquaintance);
+    widget.onAddAcquaintance(newAcquaintance);
     Navigator.of(context).pop();
   }
 
   @override
+  void dispose() {
+    _nicknameController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text(
-        '지인 추가',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
-      content: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '지인 추가하기',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             TextField(
-              controller: _nameController,
+              controller: _nicknameController,
               decoration: const InputDecoration(
-                labelText: '이름',
-                hintText: '지인의 이름을 입력하세요',
+                labelText: '닉네임',
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: _relationshipController,
+              controller: _ageController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '나이',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedGender,
+              decoration: const InputDecoration(
+                labelText: '성별',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: '남', child: Text('남자')),
+                DropdownMenuItem(value: '여', child: Text('여자')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedGender = value;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedRelationship,
               decoration: const InputDecoration(
                 labelText: '관계',
-                hintText: '지인과의 관계를 입력하세요',
+                border: OutlineInputBorder(),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              '주요 증상',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _symptoms.map((symptom) {
-                return ChoiceChip(
-                  label: Text(symptom),
-                  selected: _selectedSymptom == symptom,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedSymptom = symptom;
-                      });
-                    }
-                  },
+              items: _relationships.map((relationship) {
+                return DropdownMenuItem(
+                  value: relationship,
+                  child: Text(relationship),
                 );
               }).toList(),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '증상 정도',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Slider(
-              value: _symptomValue,
               onChanged: (value) {
-                setState(() {
-                  _symptomValue = value;
-                  _severityLevel = value < 0.4 ? 1 : value < 0.7 ? 2 : 3;
-                });
+                if (value != null) {
+                  setState(() {
+                    _selectedRelationship = value;
+                  });
+                }
               },
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _handleSubmit,
+                child: const Text('추가하기'),
+              ),
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            '취소',
-            style: TextStyle(
-              color: Colors.grey[600],
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: _handleAdd,
-          child: const Text(
-            '추가',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 } 

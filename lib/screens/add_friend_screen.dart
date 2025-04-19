@@ -21,6 +21,24 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _searchResult;
+  String? _myId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyId();
+  }
+
+  void _loadMyId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userData = prefs.getString('user_data');
+    if (userData != null) {
+      final decodedData = json.decode(userData);
+      setState(() {
+        _myId = decodedData['loginId'];
+      });
+    }
+  }
 
   void _searchUser() async {
     if (_searchController.text.isEmpty) return;
@@ -161,6 +179,16 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               ),
               onSubmitted: (_) => _searchUser(),
             ),
+            if (_myId != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                '내 아이디: $_myId',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 16),
               Text(
