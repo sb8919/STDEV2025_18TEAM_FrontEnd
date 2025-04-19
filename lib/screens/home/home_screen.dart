@@ -619,9 +619,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    ...newsList.map((news) => GestureDetector(
-                      onTap: () => _showNewsDetailModal(context, news),
-                      child: NewsCard(news: news),
+                    ...newsList.map((news) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: GestureDetector(
+                        onTap: () => _showNewsDetailModal(context, news),
+                        child: NewsCard(news: news),
+                      ),
                     )).toList(),
                   ],
                 ),
