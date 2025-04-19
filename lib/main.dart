@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'constants/app_colors.dart';
 import 'providers/calendar_provider.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 기본 스플래시 스크린 제거
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   runApp(const MyApp());
 }
 
@@ -23,6 +27,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
           scaffoldBackgroundColor: AppColors.scaffoldBackground,
+          fontFamily: 'Pretendard',
         ),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
@@ -32,7 +37,7 @@ class MyApp extends StatelessWidget {
         supportedLocales: const [
           Locale('ko', 'KR'),
         ],
-        home: const HomeScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
