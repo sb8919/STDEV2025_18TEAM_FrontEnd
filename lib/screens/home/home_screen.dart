@@ -365,31 +365,39 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _showAddAcquaintanceDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AddAcquaintanceDialog(
-        onAdd: (newAcquaintance) {
-          setState(() {
-            final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
-            if (mainMemberIndex != -1) {
-              final mainMember = _members[mainMemberIndex];
-              if (mainMember.acquaintances.length < 4) {
-                _members[mainMemberIndex] = Member(
-                  nickname: mainMember.nickname,
-                  gender: mainMember.gender,
-                  age: mainMember.age,
-                  symptoms: mainMember.symptoms,
-                  relationship: mainMember.relationship,
-                  isMainProfile: mainMember.isMainProfile,
-                  acquaintances: [...mainMember.acquaintances, newAcquaintance],
-                );
-              }
-            }
-          });
-        },
+  void _handleAddAcquaintance(Map<String, dynamic> userData) {
+    final newAcquaintance = Acquaintance(
+      name: userData['nickname'] ?? '',
+      relationship: userData['relationship'] ?? '지인',
+      imagePath: 'assets/images/charactor/medit_circle.png',
+      healthMetrics: HealthMetrics(
+        metrics: [
+          MetricData(
+            name: '건강상태',
+            value: 0.7,
+            severityLevel: 2,
+          ),
+        ],
       ),
     );
+
+    setState(() {
+      final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
+      if (mainMemberIndex != -1) {
+        final mainMember = _members[mainMemberIndex];
+        if (mainMember.acquaintances.length < 4) {
+          _members[mainMemberIndex] = Member(
+            nickname: mainMember.nickname,
+            gender: mainMember.gender,
+            age: mainMember.age,
+            symptoms: mainMember.symptoms,
+            relationship: mainMember.relationship,
+            isMainProfile: mainMember.isMainProfile,
+            acquaintances: [...mainMember.acquaintances, newAcquaintance],
+          );
+        }
+      }
+    });
   }
 
   void _showNewsDetailModal(BuildContext context, CardNews news) {
@@ -610,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     AcquaintanceSection(
                       mainMember: _members.firstWhere((member) => member.isMainProfile),
-                      onAddTap: _showAddAcquaintanceDialog,
+                      onAddAcquaintance: _handleAddAcquaintance,
                     ),
                     const SizedBox(height: 30),
                     Text(

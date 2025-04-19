@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../../models/member.dart';
-import 'add_acquaintance_dialog.dart';
+import 'search_medit_id_dialog.dart';
 
 class AcquaintanceSection extends StatelessWidget {
   final Member mainMember;
-  final VoidCallback onAddTap;
+  final Function(Map<String, dynamic>) onAddAcquaintance;
 
   const AcquaintanceSection({
     super.key,
     required this.mainMember,
-    required this.onAddTap,
+    required this.onAddAcquaintance,
   });
+
+  void _showSearchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => SearchMeditIdDialog(
+        onUserSelected: onAddAcquaintance,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +71,6 @@ class AcquaintanceSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 👤 구성원 + 관계
           Row(
             children: [
               Image.asset(
@@ -94,54 +102,52 @@ class AcquaintanceSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // 📊 막대 차트
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: acquaintance.healthMetrics.metrics.map((metric) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
+          const Spacer(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: acquaintance.healthMetrics.metrics.map((metric) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 80,
+                    child: Stack(
+                      children: [
+                        Container(
                           width: 24,
                           height: 80 * metric.value,
+                          margin: EdgeInsets.only(top: 80 * (1 - metric.value)),
                           decoration: BoxDecoration(
                             color: _getSeverityColor(metric.severityLevel),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(12),
+                              bottom: Radius.zero,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: 32,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          metric.name,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF868686),
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: 32,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        metric.name,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF868686),
                         ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
                       ),
                     ),
-                  ],
-                );
-              }).toList(),
-            ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -150,12 +156,12 @@ class AcquaintanceSection extends StatelessWidget {
 
   Widget _buildAddCard(BuildContext context) {
     return GestureDetector(
-      onTap: onAddTap,
+      onTap: () => _showSearchDialog(context),
       child: Container(
         width: MediaQuery.of(context).size.width / 2 - 30,
         height: 200,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFFD9D9D9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: Colors.grey[300]!,
