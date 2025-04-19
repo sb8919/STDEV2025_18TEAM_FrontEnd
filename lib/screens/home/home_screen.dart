@@ -165,10 +165,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _handleDateSelected(DateTime date) {
     setState(() {
-      if (date.difference(_startOfWeek).inDays >= 7 || date.difference(_startOfWeek).inDays < 0) {
-        _startOfWeek = date.subtract(Duration(days: date.weekday));
-      }
       _selectedDate = date;
+      // 선택된 날짜가 현재 주의 범위를 벗어났을 때만 시작일을 업데이트
+      if (date.difference(_startOfWeek).inDays >= 7 || date.isBefore(_startOfWeek)) {
+        // 선택된 날짜의 해당 주 일요일을 시작일로 설정
+        _startOfWeek = date.subtract(Duration(days: date.weekday % 7));
+      }
     });
   }
 
