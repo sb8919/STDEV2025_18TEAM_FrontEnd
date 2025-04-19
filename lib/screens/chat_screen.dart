@@ -1066,7 +1066,13 @@ class ChatMessage {
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  buildProfileCircle('남', 25, size: 46),
+                  ClipOval(
+                    child: Image.asset(
+                      'assets/images/charactor/medit_circle.png',
+                      width: 46,
+                      height: 46,
+                    ),
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     '메딧톡',
@@ -1203,7 +1209,13 @@ class ChatMessage {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                buildProfileCircle('남', 25, size: 46),
+                ClipOval(
+                  child: Image.asset(
+                    'assets/images/charactor/medit_circle.png',
+                    width: 46,
+                    height: 46,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 const Text(
                   '메딧톡',
