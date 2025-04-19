@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_info_model.dart';
-import '../home_screen.dart';
+import '../home/home_screen.dart';
 
 class UserInfo2Screen extends StatefulWidget {
   final UserInfoModel userInfo;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../home_screen.dart';
+import '../home/home_screen.dart';
 import '../../widgets/speech_bubble.dart';
 import '../../models/user_info_model.dart';
 import 'user_info2_screen.dart';
