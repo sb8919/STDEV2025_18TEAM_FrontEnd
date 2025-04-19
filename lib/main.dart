@@ -8,7 +8,7 @@ import 'providers/calendar_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // 디버그 옵션: true로 설정하면 항상 온보딩 화면이 표시됩니다.
-const bool debugShowOnboarding = false;
+const bool debugShowOnboarding = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

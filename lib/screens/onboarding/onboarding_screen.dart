@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stdev2025_18team_frontend/constants/app_colors.dart';
 import 'onboarding_model.dart';
 import 'user_info_screen.dart';
 
@@ -67,7 +68,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: _navigateToUserInfo,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF005BAC),
+                        backgroundColor: AppColors.primary,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
