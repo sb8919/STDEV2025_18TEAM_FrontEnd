@@ -89,11 +89,7 @@ class _ProfileCardState extends State<ProfileCard> {
             CircleAvatar(
               radius: 20,
               backgroundColor: widget.member.isMainProfile ? AppColors.primary : Colors.grey[300],
-              child: Icon(
-                Icons.person,
-                color: widget.member.isMainProfile ? Colors.white : Colors.grey[600],
-                size: 24,
-              ),
+              child: Image.asset('assets/images/charactor/medit_circle.png'),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -103,16 +99,15 @@ class _ProfileCardState extends State<ProfileCard> {
                   Text(
                     widget.member.nickname,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
                   Text(
                     '관계 | ${widget.member.relationship}',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                      fontSize: 11,
+                      color: Color(0xFF868686),
                     ),
                   ),
                 ],
@@ -240,7 +235,7 @@ class _ProfileCardState extends State<ProfileCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFCACACA),
         borderRadius: widget.member.isMainProfile && !widget.showAllProfiles
             ? BorderRadius.circular(15)
             : null,
@@ -248,7 +243,18 @@ class _ProfileCardState extends State<ProfileCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildProfileHeader(),
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFCACACA),
+              borderRadius: !widget.isExpanded
+                  ? BorderRadius.circular(15)
+                  : const BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                    ),
+            ),
+            child: _buildProfileHeader(),
+          ),
           if (widget.isExpanded) ...[
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),

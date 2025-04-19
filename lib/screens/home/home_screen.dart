@@ -8,6 +8,8 @@ import 'components/profile_card.dart';
 import 'components/home_app_bar.dart';
 import 'components/default_app_bar.dart';
 import 'components/home_bottom_navigation_bar.dart';
+import 'components/acquaintance_section.dart';
+import 'components/add_acquaintance_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,6 +49,44 @@ class _HomeScreenState extends State<HomeScreen> {
       symptoms: ['두통', '어지러움'],
       relationship: '본인',
       isMainProfile: true,
+      acquaintances: [
+        Acquaintance(
+          name: '구성원 1',
+          relationship: '모',
+          imagePath: 'assets/images/charactor/medit_circle.png',
+          healthMetrics: HealthMetrics(
+            metrics: [
+              MetricData(name: '편두통', value: 0.8, severityLevel: 3),
+              MetricData(name: '건강상태', value: 0.6, severityLevel: 2),
+              MetricData(name: '복통', value: 0.4, severityLevel: 1),
+            ],
+          ),
+        ),
+        Acquaintance(
+          name: '구성원 2',
+          relationship: '부',
+          imagePath: 'assets/images/charactor/medit_circle.png',
+          healthMetrics: HealthMetrics(
+            metrics: [
+              MetricData(name: '불안감', value: 0.9, severityLevel: 3),
+              MetricData(name: '현기', value: 0.7, severityLevel: 2),
+              MetricData(name: '걱정', value: 0.5, severityLevel: 1),
+            ],
+          ),
+        ),
+        Acquaintance(
+          name: '구성원 3',
+          relationship: '배우자',
+          imagePath: 'assets/images/charactor/medit_circle.png',
+          healthMetrics: HealthMetrics(
+            metrics: [
+              MetricData(name: '근육통', value: 0.7, severityLevel: 3),
+              MetricData(name: '두통', value: 0.5, severityLevel: 2),
+              MetricData(name: '손저림', value: 0.3, severityLevel: 1),
+            ],
+          ),
+        ),
+      ],
     ),
     Member(
       nickname: '프로필 2',
@@ -57,6 +97,23 @@ class _HomeScreenState extends State<HomeScreen> {
       isMainProfile: false,
     ),
   ];
+
+  // 차트 관련 상수
+  final double barMaxHeight = 80.0;
+  final double barWidth = 24.0;
+
+  Color _getSeverityColor(int level) {
+    switch (level) {
+      case 1:
+        return const Color(0xFF91D7E0); // 연한 청록색
+      case 2:
+        return const Color(0xFFFF9E9E); // 연한 주황색
+      case 3:
+        return const Color(0xFFFF6B6B); // 진한 주황색
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   void initState() {
@@ -232,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       relationship: '가족',
                       isMainProfile: _isNewProfileMain,
                     );
-                    
+
                     _members.add(newMember);
 
                     // 대표계정이 없는 경우 첫 번째 프로필을 대표계정으로 설정
@@ -272,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           }
         }
-        
+
         _members[index] = updatedMember;
 
         // 대표계정이 없는 경우 첫 번째 프로필을 대표계정으로 설정
@@ -285,13 +342,40 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _showAddAcquaintanceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AddAcquaintanceDialog(
+        onAdd: (newAcquaintance) {
+          setState(() {
+            final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
+            if (mainMemberIndex != -1) {
+              final mainMember = _members[mainMemberIndex];
+              if (mainMember.acquaintances.length < 4) {
+                _members[mainMemberIndex] = Member(
+                  nickname: mainMember.nickname,
+                  gender: mainMember.gender,
+                  age: mainMember.age,
+                  symptoms: mainMember.symptoms,
+                  relationship: mainMember.relationship,
+                  isMainProfile: mainMember.isMainProfile,
+                  acquaintances: [...mainMember.acquaintances, newAcquaintance],
+                );
+              }
+            }
+          });
+        },
+      ),
+    );
+  }
+
   Widget _buildProfileSection() {
     final mainProfile = _members.firstWhere((member) => member.isMainProfile);
     final otherProfiles = _members.where((member) => !member.isMainProfile).toList();
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFCACACA),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -308,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFFCACACA),
                 borderRadius: !_isExpanded
                     ? BorderRadius.circular(15)
                     : const BorderRadius.only(
@@ -363,16 +447,26 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           '프로필 추가하기',
                           style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
+                            color: Colors.black,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(
-                          Icons.add,
-                          size: 16,
-                          color: Colors.grey[600],
+                        Container(
+                          width: 15,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFA9A9A9), // 배경색
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.add,
+                              size: 13,
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -387,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_members.length > 1)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFFCACACA),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(15),
                     bottomRight: Radius.circular(15),
@@ -399,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Icon(
                       _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: Colors.grey[600],
+                      color: AppColors.primary,
                     ),
                   ),
                 ),
@@ -407,6 +501,169 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAcquaintanceCard(Acquaintance acquaintance) {
+    return Container(
+      width: MediaQuery.of(context).size.width / 2 - 30,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 👤 구성원 + 관계
+          Row(
+            children: [
+              Image.asset(
+                acquaintance.imagePath,
+                width: 40,
+                height: 40,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      acquaintance.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '관계 | ${acquaintance.relationship}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF868686),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // 📊 막대 차트
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: acquaintance.healthMetrics.metrics.map((metric) {
+              return Column(
+                children: [
+                  Container(
+                    width: barWidth,
+                    height: barMaxHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        width: barWidth,
+                        height: barMaxHeight * metric.value,
+                        decoration: BoxDecoration(
+                          color: _getSeverityColor(metric.severityLevel),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: barWidth + 8,
+                    child: Text(
+                      metric.name,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF868686),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAcquaintanceSection() {
+    final mainMember = _members.firstWhere((member) => member.isMainProfile);
+    if (mainMember.acquaintances.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 30),
+        Text(
+          '${mainMember.nickname}님, 지인의 이상 신호 소식이에요!',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 20,
+          runSpacing: 16,
+          children: [
+            ...mainMember.acquaintances.map((acquaintance) => _buildAcquaintanceCard(acquaintance)),
+            if (mainMember.acquaintances.length < 4)
+              GestureDetector(
+                onTap: _showAddAcquaintanceDialog,
+                child: Container(
+                  width: MediaQuery.of(context).size.width / 2 - 30,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.grey[300]!,
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        size: 32,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '추가하기',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+
+      ],
     );
   }
 
@@ -426,12 +683,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
+      backgroundColor: Colors.white,
       appBar: _buildAppBar(),
       body: _bottomNavIndex == 0
           ? Padding(
               padding: const EdgeInsets.all(20.0),
-              child: _buildProfileSection(),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _buildProfileSection(),
+                    AcquaintanceSection(
+                      mainMember: _members.firstWhere((member) => member.isMainProfile),
+                      onAddTap: _showAddAcquaintanceDialog,
+                    ),
+                  ],
+                ),
+              ),
             )
           : _bottomScreens[_bottomNavIndex],
       bottomNavigationBar: HomeBottomNavigationBar(
@@ -444,4 +711,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-} 
+}
