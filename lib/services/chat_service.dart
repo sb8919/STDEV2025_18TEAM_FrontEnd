@@ -60,28 +60,71 @@ class ChatService {
     String content,
   ) async {
     try {
-      print('Sending message to user $loginId conversation $conversationId: $content');
       final response = await http.post(
         Uri.parse('$baseUrl/users/$loginId/conversations/$conversationId/messages/'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Accept': 'application/json; charset=UTF-8',
         },
-        body: jsonEncode({
+        body: utf8.encode(jsonEncode({
           'sender': 'user',
           'content': content,
-        }),
+        })),
       );
 
-      print('Message response: ${response.body}');
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(utf8.decode(response.bodyBytes));
+        print('Server response decoded: $decodedResponse');
+        return decodedResponse;
+      } else {
+        print('Error response: ${utf8.decode(response.bodyBytes)}');
+        throw Exception('Failed to send message: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Connection error: $e');
+      throw Exception('Failed to connect to server: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> createConversationReport(
+    String conversationId,
+    Map<String, dynamic> reportData,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/conversations/$conversationId/reports/'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Accept': 'application/json; charset=UTF-8',
+        },
+        body: utf8.encode(jsonEncode(reportData)),
+      );
+
       if (response.statusCode == 200) {
         return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
-        print('Server response: ${response.body}');
-        throw Exception('Failed to send message: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to create report: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error sending message: $e');
+      throw Exception('Failed to connect to server: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getDiseaseReports(String loginId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$loginId/reports/diseases/'),
+        headers: {
+          'Accept': 'application/json; charset=UTF-8',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      } else {
+        throw Exception('Failed to get disease reports: ${response.statusCode}');
+      }
+    } catch (e) {
       throw Exception('Failed to connect to server: $e');
     }
   }

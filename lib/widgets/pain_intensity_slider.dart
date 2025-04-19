@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
 class PainIntensitySlider extends StatefulWidget {
-  final double initialValue;
-  final ValueChanged<double> onChanged;
-  final String? title;
+  final Function(double) onChanged;
+  final double value;
 
   const PainIntensitySlider({
     super.key,
-    required this.initialValue,
     required this.onChanged,
-    this.title,
+    required this.value,
   });
 
   @override
@@ -17,81 +15,79 @@ class PainIntensitySlider extends StatefulWidget {
 }
 
 class _PainIntensitySliderState extends State<PainIntensitySlider> {
-  late double _value;
-  final List<String> _intensityLabels = [
-    '없음',
-    '약간',
-    '보통',
-    '심함',
-    '매우 심함',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _value = widget.initialValue;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (widget.title != null)
-          Text(
-            widget.title!,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
-        if (widget.title != null)
-          const SizedBox(height: 16),
-        SliderTheme(
-          data: SliderThemeData(
-            trackHeight: 8.0,
-            activeTrackColor: Colors.red[300],
-            inactiveTrackColor: Colors.grey[300],
-            thumbColor: Colors.red,
-            overlayColor: Colors.red.withOpacity(0.1),
-            valueIndicatorColor: Colors.red,
-            valueIndicatorTextStyle: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
-          ),
-          child: Slider(
-            value: _value,
-            min: 0,
-            max: 4,
-            divisions: 4,
-            label: _intensityLabels[_value.round()],
-            onChanged: (value) {
-              setState(() {
-                _value = value;
-              });
-              widget.onChanged(value);
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(
-              _intensityLabels.length,
-              (index) => Text(
-                _intensityLabels[index],
+            children: [
+              const Text(
+                '약함',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: index == _value.round() ? Colors.red : Colors.grey,
-                  fontWeight: index == _value.round() ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                  color: Colors.grey,
                 ),
               ),
+              const Text(
+                '심함',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF394BF5),
+              inactiveTrackColor: Colors.grey[200],
+              thumbColor: const Color(0xFF394BF5),
+              overlayColor: const Color(0xFF394BF5).withOpacity(0.2),
+              trackHeight: 4.0,
+              thumbShape: const RoundSliderThumbShape(
+                enabledThumbRadius: 8.0,
+              ),
+              overlayShape: const RoundSliderOverlayShape(
+                overlayRadius: 16.0,
+              ),
+            ),
+            child: Slider(
+              value: widget.value,
+              min: 0.0,
+              max: 10.0,
+              divisions: 10,
+              label: widget.value.toStringAsFixed(1),
+              onChanged: widget.onChanged,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            '통증 강도: ${widget.value.toStringAsFixed(1)}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF394BF5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 } 
