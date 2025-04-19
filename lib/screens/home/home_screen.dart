@@ -3,13 +3,15 @@ import '../calendar_screen.dart';
 import '../chat_onboarding_screen.dart';
 import '../../constants/app_colors.dart';
 import '../../models/member.dart';
+import '../../models/card_news.dart';
 import 'components/week_calendar.dart';
-import 'components/profile_card.dart';
 import 'components/home_app_bar.dart';
 import 'components/default_app_bar.dart';
 import 'components/home_bottom_navigation_bar.dart';
 import 'components/acquaintance_section.dart';
 import 'components/add_acquaintance_dialog.dart';
+import 'components/profile_section.dart';
+import 'components/news_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -101,6 +103,25 @@ class _HomeScreenState extends State<HomeScreen> {
   // 차트 관련 상수
   final double barMaxHeight = 80.0;
   final double barWidth = 24.0;
+
+  // Sample news data
+  final List<CardNews> newsList = [
+    CardNews(
+      title: "술마시고 두통, 타이레놀 먹어도 될까요?",
+      iconPath: "assets/images/logos/logo.png",
+      date: "2024.03.20",
+    ),
+    CardNews(
+      title: "헷갈리는 감기 vs 독감 차이 3초만에 확인하기",
+      iconPath: "assets/images/logos/logo.png",
+      date: "2024.03.20",
+    ),
+    CardNews(
+      title: "이 증상 알고 보니 코로나일 수 있다?",
+      iconPath: "assets/images/logos/logo.png",
+      date: "2024.03.20",
+    ),
+  ];
 
   Color _getSeverityColor(int level) {
     switch (level) {
@@ -369,301 +390,82 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProfileSection() {
-    final mainProfile = _members.firstWhere((member) => member.isMainProfile);
-    final otherProfiles = _members.where((member) => !member.isMainProfile).toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFCACACA),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+  void _showNewsDetailModal(BuildContext context, CardNews news) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFCACACA),
-                borderRadius: !_isExpanded
-                    ? BorderRadius.circular(15)
-                    : const BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15),
-                      ),
-              ),
-              child: ProfileCard(
-                member: mainProfile,
-                isExpanded: _selectedMember == mainProfile,
-                onToggle: () => _toggleMemberDetail(mainProfile),
-                showAllProfiles: _isExpanded,
-                onShowAllToggle: _toggleExpanded,
-                onMemberUpdate: _handleMemberUpdate,
-              ),
-            ),
-            if (_isExpanded) ...[
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: Colors.grey),
-              ),
-              ...otherProfiles.map((member) => Column(
-                children: [
-                  ProfileCard(
-                    member: member,
-                    isExpanded: _selectedMember == member,
-                    onToggle: () => _toggleMemberDetail(member),
-                    showAllProfiles: _isExpanded,
-                    onShowAllToggle: _toggleExpanded,
-                    onMemberUpdate: _handleMemberUpdate,
-                  ),
-                  if (member != otherProfiles.last)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, color: Colors.grey),
-                    ),
-                ],
-              )),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: Colors.grey),
-              ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _showAddProfileDialog,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '프로필 추가하기',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Container(
-                          width: 15,
-                          height: 15,
-                          decoration: BoxDecoration(
-                            color: Color(0xFFA9A9A9), // 배경색
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.add,
-                              size: 13,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Divider(height: 1, color: Colors.grey),
-            ),
-            if (_members.length > 1)
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCACACA),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15),
-                  ),
-                ),
-                child: GestureDetector(
-                  onTap: _toggleExpanded,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Icon(
-                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAcquaintanceCard(Acquaintance acquaintance) {
-    return Container(
-      width: MediaQuery.of(context).size.width / 2 - 30,
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 👤 구성원 + 관계
-          Row(
-            children: [
-              Image.asset(
-                acquaintance.imagePath,
-                width: 40,
-                height: 40,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      acquaintance.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '관계 | ${acquaintance.relationship}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF868686),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // 📊 막대 차트
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: acquaintance.healthMetrics.metrics.map((metric) {
-              return Column(
-                children: [
-                  Container(
-                    width: barWidth,
-                    height: barMaxHeight,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        width: barWidth,
-                        height: barMaxHeight * metric.value,
-                        decoration: BoxDecoration(
-                          color: _getSeverityColor(metric.severityLevel),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: barWidth + 8,
-                    child: Text(
-                      metric.name,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF868686),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAcquaintanceSection() {
-    final mainMember = _members.firstWhere((member) => member.isMainProfile);
-    if (mainMember.acquaintances.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 30),
-        Text(
-          '${mainMember.nickname}님, 지인의 이상 신호 소식이에요!',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Wrap(
-          spacing: 20,
-          runSpacing: 16,
-          children: [
-            ...mainMember.acquaintances.map((acquaintance) => _buildAcquaintanceCard(acquaintance)),
-            if (mainMember.acquaintances.length < 4)
-              GestureDetector(
-                onTap: _showAddAcquaintanceDialog,
-                child: Container(
-                  width: MediaQuery.of(context).size.width / 2 - 30,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  news.iconPath,
+                  width: 200,
                   height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.grey[300]!,
-                      width: 1,
-                    ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  news.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_circle_outline,
-                        size: 32,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '추가하기',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-
-                    ],
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "자세한 가능성이 높아져 같이 병원을 위험!\n술 마시기 전후, 당일의 복용 금지를 추천해 드리요!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF666666),
                   ),
                 ),
-              ),
-          ],
-        ),
-
-      ],
+                const SizedBox(height: 20),
+                const Text(
+                  "대체 약으로는 이부프로펜 계열로 복용해, 현재 등을 추천해요.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF666666),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFF666666),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      "확인했어요!",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -680,22 +482,147 @@ class _HomeScreenState extends State<HomeScreen> {
     return const DefaultAppBar();
   }
 
+  Widget _buildHealthStatusCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                'assets/images/charactor/medit_circle.png',
+                width: 40,
+                height: 40,
+              ),
+              const SizedBox(width: 12),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '건강 상태',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    '최근 7일 기준',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF868686),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildMetricBar('두통', 0.7, 2),
+              _buildMetricBar('어지러움', 0.5, 1),
+              _buildMetricBar('스트레스', 0.3, 1),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricBar(String label, double value, int severityLevel) {
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: 24,
+              height: 80 * value,
+              decoration: BoxDecoration(
+                color: _getSeverityColor(severityLevel),
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 32,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF868686),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
       body: _bottomNavIndex == 0
           ? Padding(
               padding: const EdgeInsets.all(20.0),
               child: SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildProfileSection(),
+                    ProfileSection(
+                      members: _members,
+                      selectedMember: _selectedMember,
+                      isExpanded: _isExpanded,
+                      onMemberUpdate: _handleMemberUpdate,
+                      onToggleMemberDetail: _toggleMemberDetail,
+                      onToggleExpanded: _toggleExpanded,
+                      onAddProfile: _showAddProfileDialog,
+                    ),
                     AcquaintanceSection(
                       mainMember: _members.firstWhere((member) => member.isMainProfile),
                       onAddTap: _showAddAcquaintanceDialog,
                     ),
+                    const SizedBox(height: 30),
+                    Text(
+                      '${_nickname}님, 요즘 궁금할 만한 것들을 알려드릴게요!',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ...newsList.map((news) => GestureDetector(
+                      onTap: () => _showNewsDetailModal(context, news),
+                      child: NewsCard(news: news),
+                    )).toList(),
                   ],
                 ),
               ),

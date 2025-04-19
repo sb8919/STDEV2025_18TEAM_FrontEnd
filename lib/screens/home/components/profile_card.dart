@@ -235,7 +235,7 @@ class _ProfileCardState extends State<ProfileCard> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFCACACA),
+        color: Colors.white,
         borderRadius: widget.member.isMainProfile && !widget.showAllProfiles
             ? BorderRadius.circular(15)
             : null,
@@ -245,7 +245,7 @@ class _ProfileCardState extends State<ProfileCard> {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFCACACA),
+              color: Colors.white,
               borderRadius: !widget.isExpanded
                   ? BorderRadius.circular(15)
                   : const BorderRadius.only(

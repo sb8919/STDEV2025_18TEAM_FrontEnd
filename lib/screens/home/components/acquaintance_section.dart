@@ -1,61 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../models/member.dart';
-import 'acquaintance_card.dart';
+import 'add_acquaintance_dialog.dart';
 
 class AcquaintanceSection extends StatelessWidget {
   final Member mainMember;
-  final VoidCallback? onAddTap;
+  final VoidCallback onAddTap;
 
   const AcquaintanceSection({
     super.key,
     required this.mainMember,
-    this.onAddTap,
+    required this.onAddTap,
   });
-
-  Widget _buildAddCard(double cardWidth) {
-    return GestureDetector(
-      onTap: onAddTap,
-      child: Container(
-        width: cardWidth,
-        height: 200,
-        decoration: BoxDecoration(
-          color: const Color(0xFFD9D9D9),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.grey[400]!,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_circle_outline,
-              size: 32,
-              color: Colors.grey[600],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '추가하기',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     if (mainMember.acquaintances.isEmpty) {
       return const SizedBox.shrink();
     }
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth - 60) / 2; // 20 padding on each side + 20 spacing
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,19 +32,168 @@ class AcquaintanceSection extends StatelessWidget {
         const SizedBox(height: 20),
         Wrap(
           spacing: 20,
-          runSpacing: 20,
+          runSpacing: 16,
           children: [
-            ...mainMember.acquaintances.map(
-              (acquaintance) => AcquaintanceCard(
-                acquaintance: acquaintance,
-                cardWidth: cardWidth,
-              ),
-            ),
+            ...mainMember.acquaintances.map((acquaintance) => _buildAcquaintanceCard(context, acquaintance)),
             if (mainMember.acquaintances.length < 4)
-              _buildAddCard(cardWidth),
+              _buildAddCard(context),
           ],
         ),
       ],
     );
+  }
+
+  Widget _buildAcquaintanceCard(BuildContext context, Acquaintance acquaintance) {
+    return Container(
+      width: MediaQuery.of(context).size.width / 2 - 30,
+      height: 200,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 👤 구성원 + 관계
+          Row(
+            children: [
+              Image.asset(
+                acquaintance.imagePath,
+                width: 40,
+                height: 40,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      acquaintance.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '관계 | ${acquaintance.relationship}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF868686),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // 📊 막대 차트
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: acquaintance.healthMetrics.metrics.map((metric) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          width: 24,
+                          height: 80 * metric.value,
+                          decoration: BoxDecoration(
+                            color: _getSeverityColor(metric.severityLevel),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: 32,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          metric.name,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF868686),
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddCard(BuildContext context) {
+    return GestureDetector(
+      onTap: onAddTap,
+      child: Container(
+        width: MediaQuery.of(context).size.width / 2 - 30,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              size: 32,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '추가하기',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getSeverityColor(int level) {
+    switch (level) {
+      case 1:
+        return const Color(0xFF91D7E0); // 연한 청록색
+      case 2:
+        return const Color(0xFFFF9E9E); // 연한 주황색
+      case 3:
+        return const Color(0xFFFF6B6B); // 진한 주황색
+      default:
+        return Colors.grey;
+    }
   }
 } 
