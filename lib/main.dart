@@ -5,9 +5,20 @@ import 'package:provider/provider.dart';
 import 'screens/splash_screen.dart';
 import 'constants/app_colors.dart';
 import 'providers/calendar_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+// 디버그 옵션: true로 설정하면 항상 온보딩 화면이 표시됩니다.
+const bool debugShowOnboarding = false;
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 디버그 모드에서 isFirstTime 값 설정
+  if (debugShowOnboarding) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstTime', true);
+  }
+  
   // 기본 스플래시 스크린 제거
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   runApp(const MyApp());
