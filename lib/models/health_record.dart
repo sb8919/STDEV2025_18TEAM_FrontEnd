@@ -7,6 +7,9 @@ class HealthRecord {
   final String description;
   final String type;
   final bool isPinned;
+  final List<String> symptoms;
+  final int painLevel;
+  final String? note;
 
   HealthRecord({
     required this.id,
@@ -15,6 +18,9 @@ class HealthRecord {
     required this.description,
     this.type = '통증',
     this.isPinned = false,
+    this.symptoms = const [],
+    this.painLevel = 0,
+    this.note,
   });
 
   String get formattedDate => DateFormat('yyyy-MM-dd').format(date);
@@ -31,6 +37,9 @@ final List<HealthRecord> healthRecords = [
     description: '혈압: 120/80, 체중: 65kg',
     type: '정기검진',
     isPinned: true,
+    symptoms: ['고혈압', '체중 증가'],
+    painLevel: 2,
+    note: '정기 검진 결과 전반적으로 양호',
   ),
   
   // 4월 3일
@@ -40,6 +49,8 @@ final List<HealthRecord> healthRecords = [
     title: '새로운 증상',
     description: '목 통증이 있어요',
     type: '통증',
+    symptoms: ['목 통증', '어깨 결림'],
+    painLevel: 5,
   ),
   
   // 4월 5일
@@ -49,6 +60,8 @@ final List<HealthRecord> healthRecords = [
     title: '알레르기 반응',
     description: '꽃가루 알레르기 증상',
     type: '알레르기',
+    symptoms: ['재채기', '콧물', '눈 가려움'],
+    painLevel: 3,
   ),
   
   // 4월 8일
@@ -59,6 +72,9 @@ final List<HealthRecord> healthRecords = [
     description: '두통이 있어요',
     type: '통증',
     isPinned: true,
+    symptoms: ['두통', '어지러움'],
+    painLevel: 7,
+    note: '진통제 복용 후에도 통증이 지속됨',
   ),
   HealthRecord(
     id: '5',

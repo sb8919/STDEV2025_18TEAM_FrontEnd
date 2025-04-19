@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/health_record.dart';
+import '../../screens/health_record_detail_screen.dart';
 
 class CalendarModal extends StatelessWidget {
   final DateTime date;
@@ -111,7 +112,15 @@ class CalendarModal extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        // 기록 보기 기능 구현
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HealthRecordDetailScreen(
+                              record: pinnedRecord,
+                              date: date,
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
