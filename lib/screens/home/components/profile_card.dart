@@ -32,6 +32,7 @@ class _ProfileCardState extends State<ProfileCard> {
   late TextEditingController _symptomsController;
   late TextEditingController _relationshipController;
   late bool _isMainProfile;
+  late String _selectedGender;
 
   @override
   void initState() {
@@ -56,26 +57,50 @@ class _ProfileCardState extends State<ProfileCard> {
     _symptomsController = TextEditingController(text: widget.member.symptoms.join(', '));
     _relationshipController = TextEditingController(text: widget.member.relationship);
     _isMainProfile = widget.member.isMainProfile;
+    _selectedGender = widget.member.gender;
   }
 
   void _toggleEdit() {
     setState(() {
       if (_isEditing) {
         // Save changes
-        final updatedMember = Member(
-          nickname: _nicknameController.text,
-          gender: _genderController.text,
-          age: int.tryParse(_ageController.text) ?? widget.member.age,
-          symptoms: _symptomsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
-          relationship: _relationshipController.text,
-          isMainProfile: _isMainProfile,
-        );
-        widget.onMemberUpdate(updatedMember);
+        _handleProfileUpdate();
       }
       _isEditing = !_isEditing;
       if (_isEditing) {
         _initializeControllers();
       }
+    });
+  }
+
+  void _handleProfileUpdate() {
+    if (_nicknameController.text.isEmpty ||
+        _ageController.text.isEmpty ||
+        _symptomsController.text.isEmpty) {
+      return;
+    }
+
+    final updatedMember = Member(
+      nickname: _nicknameController.text,
+      gender: _selectedGender,
+      age: int.tryParse(_ageController.text) ?? 0,
+      symptoms: _symptomsController.text
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList(),
+      relationship: widget.member.relationship,
+      isMainProfile: _isMainProfile,
+      acquaintances: widget.member.acquaintances,
+      healthMetrics: widget.member.healthMetrics,
+      loginId: widget.member.loginId,
+      password: widget.member.password,
+      ageRange: '${(int.tryParse(_ageController.text) ?? 0) ~/ 10 * 10}-${(int.tryParse(_ageController.text) ?? 0) ~/ 10 * 10 + 9}',
+    );
+
+    widget.onMemberUpdate(updatedMember);
+    setState(() {
+      _isEditing = false;
     });
   }
 

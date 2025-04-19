@@ -14,7 +14,8 @@ class UserInfoScreen extends StatefulWidget {
 
 class _UserInfoScreenState extends State<UserInfoScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _loginIdController = TextEditingController();
+  final _nicknameController = TextEditingController();
   String? _selectedGender;
   String _selectedAge = '20대';
   int _characterCount = 0;
@@ -32,23 +33,25 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController.addListener(() {
+    _nicknameController.addListener(() {
       setState(() {
-        _characterCount = _nameController.text.length;
+        _characterCount = _nicknameController.text.length;
       });
     });
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _loginIdController.dispose();
+    _nicknameController.dispose();
     super.dispose();
   }
 
   Future<void> _saveUserInfo() async {
     if (_formKey.currentState!.validate() && _selectedGender != null) {
       final userInfo = UserInfoModel(
-        nickname: _nameController.text,
+        loginId: _loginIdController.text,
+        nickname: _nicknameController.text,
         gender: _selectedGender!,
         age: _selectedAge,
         symptoms: [],
@@ -106,6 +109,49 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                 ),
                 const SizedBox(height: 60),
                 const Text(
+                  '아이디를 입력해주세요!',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Stack(
+                  alignment: Alignment.centerRight,
+                  children: [
+                    TextFormField(
+                      controller: _loginIdController,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        hintText: '로그인에 사용할 아이디를 입력하세요',
+                        hintStyle: TextStyle(color: Colors.grey[400]),
+                        border: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.black),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return '아이디를 입력해주세요';
+                        }
+                        return null;
+                      },
+                    ),
+                    if (_loginIdController.text.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => _loginIdController.clear(),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text(
                   '닉네임을 정해주세요!',
                   style: TextStyle(
                     fontSize: 16,
@@ -118,7 +164,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                   alignment: Alignment.centerRight,
                   children: [
                     TextFormField(
-                      controller: _nameController,
+                      controller: _nicknameController,
                       maxLength: 13,
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
@@ -142,10 +188,10 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                         return null;
                       },
                     ),
-                    if (_nameController.text.isNotEmpty)
+                    if (_nicknameController.text.isNotEmpty)
                       IconButton(
                         icon: const Icon(Icons.close, color: Colors.grey),
-                        onPressed: () => _nameController.clear(),
+                        onPressed: () => _nicknameController.clear(),
                       ),
                   ],
                 ),

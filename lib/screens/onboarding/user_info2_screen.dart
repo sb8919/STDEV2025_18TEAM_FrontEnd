@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_info_model.dart';
 import '../home/home_screen.dart';
+import '../../services/api_service.dart';
+import 'dart:convert';
 
 class UserInfo2Screen extends StatefulWidget {
   final UserInfoModel userInfo;
@@ -239,23 +241,106 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
 
   Future<void> _saveAllUserInfo() async {
     final userInfo = UserInfoModel(
+      loginId: widget.userInfo.loginId,
       nickname: widget.userInfo.nickname,
-      gender: widget.userInfo.gender,
+      gender: widget.userInfo.gender == '여자' ? '여' : '남',
       age: widget.userInfo.age,
       symptoms: _selectedSymptoms.toList(),
     );
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', userInfo.nickname);
-    await prefs.setString('gender', userInfo.gender);
-    await prefs.setString('age', userInfo.age);
-    await prefs.setStringList('symptoms', userInfo.symptoms);
-    await prefs.setBool('isFirstTime', false);
+    try {
+      // Convert age string to age range
+      String ageRange = _convertAgeToRange(userInfo.age);
+      
+      // Create member object for API request
+      final member = {
+        'login_id': userInfo.loginId,
+        'nickname': userInfo.nickname,
+        'password': 'default123', // You might want to add password field in the UI
+        'age_range': ageRange,
+        'gender': userInfo.gender,
+        'usual_illness': userInfo.symptoms,
+      };
 
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      print('Sending user data to API: $member');
+
+      // Send POST request to /users/
+      final response = await ApiService.registerUser(member);
+
+      if (response != null) {
+        print('Successfully received response: $response');
+        
+        // Save user info locally
+        final prefs = await SharedPreferences.getInstance();
+        
+        // Save user data as JSON
+        final userData = {
+          'loginId': userInfo.loginId,
+          'nickname': userInfo.nickname,
+          'gender': userInfo.gender,
+          'age': userInfo.age,
+          'ageRange': ageRange,
+          'symptoms': userInfo.symptoms,
+        };
+        
+        await prefs.setString('user_data', json.encode(userData));
+        await prefs.setBool('isFirstTime', false);
+        await prefs.setBool('is_onboarding_completed', true);
+
+        // Navigate to home screen
+        if (mounted) {
+          print('Navigating to HomeScreen');
+          // Clear all existing routes and push HomeScreen
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+              settings: const RouteSettings(name: '/home'),
+            ),
+            (Route<dynamic> route) => false,
+          );
+        }
+      } else {
+        print('Registration failed - response is null');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('회원가입에 실패했습니다. 다시 시도해주세요.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error in _saveAllUserInfo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('오류가 발생했습니다. 다시 시도해주세요.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  String _convertAgeToRange(String age) {
+    switch (age) {
+      case '10대 미만':
+        return '0-9';
+      case '10대':
+        return '10-19';
+      case '20대':
+        return '20-29';
+      case '30대':
+        return '30-39';
+      case '40대':
+        return '40-49';
+      case '50대':
+        return '50-59';
+      case '60대 이상':
+        return '60-99';
+      default:
+        return '20-29'; // Default case
     }
   }
 } 

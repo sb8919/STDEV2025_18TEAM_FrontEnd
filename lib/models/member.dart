@@ -7,16 +7,22 @@ class Member {
   final bool isMainProfile;
   final List<Acquaintance> acquaintances;
   final HealthMetrics healthMetrics;
+  final String loginId;
+  final String password;
+  final String ageRange;
 
   Member({
     required this.nickname,
     required this.gender,
     required this.age,
     required this.symptoms,
-    required this.relationship,
-    required this.isMainProfile,
+    this.relationship = '본인',
+    this.isMainProfile = false,
     this.acquaintances = const [],
     this.healthMetrics = const HealthMetrics(),
+    required this.loginId,
+    required this.password,
+    required this.ageRange,
   });
 
   Member copyWith({
@@ -28,6 +34,9 @@ class Member {
     bool? isMainProfile,
     List<Acquaintance>? acquaintances,
     HealthMetrics? healthMetrics,
+    String? loginId,
+    String? password,
+    String? ageRange,
   }) {
     return Member(
       nickname: nickname ?? this.nickname,
@@ -38,7 +47,21 @@ class Member {
       isMainProfile: isMainProfile ?? this.isMainProfile,
       acquaintances: acquaintances ?? this.acquaintances,
       healthMetrics: healthMetrics ?? this.healthMetrics,
+      loginId: loginId ?? this.loginId,
+      password: password ?? this.password,
+      ageRange: ageRange ?? this.ageRange,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'login_id': loginId,
+      'nickname': nickname,
+      'password': password,
+      'age_range': ageRange,
+      'gender': gender,
+      'usual_illness': symptoms,
+    };
   }
 }
 

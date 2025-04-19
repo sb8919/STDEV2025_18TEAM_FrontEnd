@@ -12,6 +12,8 @@ import 'components/acquaintance_section.dart';
 import 'components/add_acquaintance_dialog.dart';
 import 'components/profile_section.dart';
 import 'components/news_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,61 +45,74 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   // 임시 데이터
-  final List<Member> _members = [
-    Member(
-      nickname: '닉네임',
-      gender: '여',
-      age: 25,
-      symptoms: ['두통', '어지러움'],
-      relationship: '본인',
-      isMainProfile: true,
-      acquaintances: [
-        Acquaintance(
-          name: '구성원 1',
-          relationship: '모',
-          imagePath: 'assets/images/charactor/medit_circle.png',
-          healthMetrics: HealthMetrics(
-            metrics: [
-              MetricData(name: '편두통', value: 0.8, severityLevel: 3),
-              MetricData(name: '건강상태', value: 0.6, severityLevel: 2),
-              MetricData(name: '복통', value: 0.4, severityLevel: 1),
-            ],
-          ),
-        ),
-        Acquaintance(
-          name: '구성원 2',
-          relationship: '부',
-          imagePath: 'assets/images/charactor/medit_circle.png',
-          healthMetrics: HealthMetrics(
-            metrics: [
-              MetricData(name: '불안감', value: 0.9, severityLevel: 3),
-              MetricData(name: '현기', value: 0.7, severityLevel: 2),
-              MetricData(name: '걱정', value: 0.5, severityLevel: 1),
-            ],
-          ),
-        ),
-        Acquaintance(
-          name: '구성원 3',
-          relationship: '배우자',
-          imagePath: 'assets/images/charactor/medit_circle.png',
-          healthMetrics: HealthMetrics(
-            metrics: [
-              MetricData(name: '근육통', value: 0.7, severityLevel: 3),
-              MetricData(name: '두통', value: 0.5, severityLevel: 2),
-              MetricData(name: '손저림', value: 0.3, severityLevel: 1),
-            ],
-          ),
-        ),
-      ],
-    ),
-    Member(
-      nickname: '프로필 2',
-      gender: '여',
-      age: 11,
-      symptoms: ['두통', '생리통'],
-      relationship: '미성년 자녀',
-      isMainProfile: false,
-    ),
+  List<Member> _members = [
+    // Member(
+    //   nickname: '닉네임',
+    //   gender: '여',
+    //   age: 25,
+    //   symptoms: ['두통', '어지러움'],
+    //   relationship: '본인',
+    //   isMainProfile: true,
+    //   loginId: 'user1',
+    //   password: 'password1',
+    //   ageRange: '20-29',
+    //   acquaintances: [
+    //     Acquaintance(
+    //       name: '구성원 1',
+    //       relationship: '모',
+    //       imagePath: 'assets/images/charactor/medit_circle.png',
+    //       healthMetrics: HealthMetrics(
+    //         metrics: [
+    //           MetricData(name: '편두통', value: 0.8, severityLevel: 3),
+    //           MetricData(name: '건강상태', value: 0.6, severityLevel: 2),
+    //           MetricData(name: '복통', value: 0.4, severityLevel: 1),
+    //         ],
+    //       ),
+    //     ),
+    //     Acquaintance(
+    //       name: '구성원 2',
+    //       relationship: '부',
+    //       imagePath: 'assets/images/charactor/medit_circle.png',
+    //       healthMetrics: HealthMetrics(
+    //         metrics: [
+    //           MetricData(name: '불안감', value: 0.9, severityLevel: 3),
+    //           MetricData(name: '현기', value: 0.7, severityLevel: 2),
+    //           MetricData(name: '걱정', value: 0.5, severityLevel: 1),
+    //         ],
+    //       ),
+    //     ),
+    //     Acquaintance(
+    //       name: '구성원 3',
+    //       relationship: '배우자',
+    //       imagePath: 'assets/images/charactor/medit_circle.png',
+    //       healthMetrics: HealthMetrics(
+    //         metrics: [
+    //           MetricData(name: '근육통', value: 0.7, severityLevel: 3),
+    //           MetricData(name: '두통', value: 0.5, severityLevel: 2),
+    //           MetricData(name: '손저림', value: 0.3, severityLevel: 1),
+    //         ],
+    //       ),
+    //     ),
+    //   ],
+    //   healthMetrics: HealthMetrics(
+    //     metrics: [
+    //       MetricData(name: '건강상태', value: 0.7, severityLevel: 2),
+    //     ],
+    //   ),
+    // ),
+    // Member(
+    //   nickname: '프로필 2',
+    //   gender: '여',
+    //   age: 11,
+    //   symptoms: ['두통', '생리통'],
+    //   relationship: '미성년 자녀',
+    //   isMainProfile: false,
+    //   loginId: 'user2',
+    //   password: 'password2',
+    //   ageRange: '10-19',
+    //   acquaintances: [],
+    //   healthMetrics: HealthMetrics(metrics: []),
+    // ),
   ];
 
   // 차트 관련 상수
@@ -139,9 +154,96 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMainUserNickname();
+    _loadUserInfo();
     _selectedDate = DateTime.now();
     _startOfWeek = _selectedDate.subtract(Duration(days: _selectedDate.weekday));
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isOnboardingCompleted = prefs.getBool('is_onboarding_completed') ?? false;
+    
+    if (isOnboardingCompleted) {
+      try {
+        final userDataString = prefs.getString('user_data');
+        if (userDataString != null) {
+          final userData = jsonDecode(userDataString);
+          
+          setState(() {
+            _nickname = userData['nickname'] ?? '';
+            
+            // 등록된 사용자가 이미 멤버 리스트에 있는지 확인
+            final existingMemberIndex = _members.indexWhere(
+              (member) => member.loginId == userData['loginId']
+            );
+            
+            if (existingMemberIndex == -1) {
+              // 등록된 사용자가 없으면 새로 추가
+              _members.insert(0, Member(
+                nickname: userData['nickname'] ?? '',
+                gender: userData['gender'] ?? '여',
+                age: int.tryParse(userData['ageRange']?.split('-')[0] ?? '0') ?? 0,
+                symptoms: List<String>.from(userData['symptoms'] ?? []),
+                relationship: '본인',
+                isMainProfile: true,
+                loginId: userData['loginId'] ?? '',
+                password: 'defaultPassword123',
+                ageRange: userData['ageRange'] ?? '20-29',
+                acquaintances: [],
+                healthMetrics: HealthMetrics(
+                  metrics: [
+                    MetricData(
+                      name: '건강상태',
+                      value: 0.7,
+                      severityLevel: 2,
+                    ),
+                  ],
+                ),
+              ));
+              
+              // 기존 멤버들의 isMainProfile을 false로 설정
+              for (int i = 1; i < _members.length; i++) {
+                _members[i] = _members[i].copyWith(isMainProfile: false);
+              }
+            } else {
+              // 등록된 사용자가 이미 있으면 정보 업데이트
+              _members[existingMemberIndex] = _members[existingMemberIndex].copyWith(
+                nickname: userData['nickname'] ?? '',
+                gender: userData['gender'] ?? '여',
+                age: int.tryParse(userData['ageRange']?.split('-')[0] ?? '0') ?? 0,
+                symptoms: List<String>.from(userData['symptoms'] ?? []),
+                isMainProfile: true,
+                ageRange: userData['ageRange'] ?? '20-29',
+              );
+              
+              // 다른 멤버들의 isMainProfile을 false로 설정
+              for (int i = 0; i < _members.length; i++) {
+                if (i != existingMemberIndex) {
+                  _members[i] = _members[i].copyWith(isMainProfile: false);
+                }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        print('Error loading user data: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('사용자 정보를 불러오는데 실패했습니다: $e')),
+          );
+        }
+      }
+    } else {
+      // 온보딩이 완료되지 않은 경우 온보딩 화면으로 이동
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ChatOnboardingScreen(),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -153,22 +255,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _loadMainUserNickname() {
-    final mainUser = _members.firstWhere(
-      (member) => member.isMainProfile,
-      orElse: () => _members.first,
-    );
-    setState(() {
-      _nickname = mainUser.nickname;
-    });
-  }
-
   void _handleDateSelected(DateTime date) {
     setState(() {
       _selectedDate = date;
-      // 선택된 날짜가 현재 주의 범위를 벗어났을 때만 시작일을 업데이트
       if (date.difference(_startOfWeek).inDays >= 7 || date.isBefore(_startOfWeek)) {
-        // 선택된 날짜의 해당 주 일요일을 시작일로 설정
         _startOfWeek = date.subtract(Duration(days: date.weekday % 7));
       }
     });
@@ -194,157 +284,139 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddProfileDialog() {
-    // 컨트롤러 초기화
-    _newNicknameController.clear();
-    _newGenderController.clear();
-    _newAgeController.clear();
-    _newSymptomsController.clear();
-    _isNewProfileMain = false;
-
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder: (BuildContext context, StateSetter setDialogState) {
-          return AlertDialog(
-            title: const Text(
-              '프로필 추가',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: _newNicknameController,
-                    decoration: const InputDecoration(
-                      labelText: '닉네임',
-                      hintText: '닉네임을 입력하세요',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _newGenderController,
-                    decoration: const InputDecoration(
-                      labelText: '성별',
-                      hintText: '성별을 입력하세요',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _newAgeController,
-                    decoration: const InputDecoration(
-                      labelText: '나이',
-                      hintText: '나이를 입력하세요',
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _newSymptomsController,
-                    decoration: const InputDecoration(
-                      labelText: '평소 질환',
-                      hintText: '콤마(,)로 구분하여 입력하세요',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Text('대표계정으로 설정'),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: _isNewProfileMain,
-                        onChanged: (value) {
-                          setDialogState(() {
-                            _isNewProfileMain = value;
-                          });
-                        },
-                        activeColor: AppColors.primary,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  '취소',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  if (_newNicknameController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('닉네임을 입력해주세요.'),
-                      ),
-                    );
-                    return;
-                  }
+      builder: (context) {
+        String nickname = '';
+        String relationship = '가족';
+        String gender = '여';
+        String age = '';
+        String symptoms = '';
 
+        return AlertDialog(
+          title: const Text('프로필 추가하기'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: '닉네임',
+                    hintText: '닉네임을 입력하세요',
+                  ),
+                  onChanged: (value) => nickname = value,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: relationship,
+                  decoration: const InputDecoration(
+                    labelText: '관계',
+                  ),
+                  items: [
+                    '가족',
+                    '부모',
+                    '자녀',
+                    '배우자',
+                    '형제/자매',
+                    '친척',
+                    '친구',
+                    '지인',
+                  ].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      relationship = newValue;
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: gender,
+                  decoration: const InputDecoration(
+                    labelText: '성별',
+                  ),
+                  items: ['남', '여'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      gender = newValue;
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: '나이',
+                    hintText: '나이를 입력하세요',
+                    suffixText: '세',
+                  ),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => age = value,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: '증상',
+                    hintText: '증상을 쉼표로 구분하여 입력하세요',
+                  ),
+                  onChanged: (value) => symptoms = value,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (nickname.isNotEmpty && relationship.isNotEmpty && age.isNotEmpty) {
+                  final newMember = Member(
+                    nickname: nickname,
+                    relationship: relationship,
+                    gender: gender,
+                    age: int.tryParse(age) ?? 0,
+                    symptoms: symptoms.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+                    isMainProfile: _members.isEmpty,
+                    acquaintances: [],
+                    healthMetrics: HealthMetrics(metrics: []),
+                    loginId: 'user${DateTime.now().millisecondsSinceEpoch}',
+                    password: 'defaultPassword',
+                    ageRange: '${(int.tryParse(age) ?? 0) ~/ 10 * 10}-${(int.tryParse(age) ?? 0) ~/ 10 * 10 + 9}',
+                  );
                   setState(() {
-                    // 새 프로필이 대표계정으로 설정되는 경우, 기존 대표계정 해제
-                    if (_isNewProfileMain) {
-                      for (int i = 0; i < _members.length; i++) {
-                        _members[i] = _members[i].copyWith(isMainProfile: false);
-                      }
-                    }
-
-                    // 새 프로필 추가
-                    final newMember = Member(
-                      nickname: _newNicknameController.text,
-                      gender: _newGenderController.text,
-                      age: int.tryParse(_newAgeController.text) ?? 0,
-                      symptoms: _newSymptomsController.text
-                          .split(',')
-                          .map((e) => e.trim())
-                          .where((e) => e.isNotEmpty)
-                          .toList(),
-                      relationship: '가족',
-                      isMainProfile: _isNewProfileMain,
-                    );
-
                     _members.add(newMember);
-
-                    // 대표계정이 없는 경우 첫 번째 프로필을 대표계정으로 설정
-                    if (!_members.any((member) => member.isMainProfile)) {
-                      _members[0] = _members[0].copyWith(isMainProfile: true);
-                    }
-
-                    _loadMainUserNickname();
                   });
-
                   Navigator.of(context).pop();
-                },
-                child: Text(
-                  '추가',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('모든 필수 정보를 입력해주세요.'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('추가'),
+            ),
+          ],
+        );
+      },
     );
   }
 
   void _handleMemberUpdate(Member updatedMember) {
     setState(() {
-      final index = _members.indexWhere((m) => m.relationship == updatedMember.relationship);
+      final index = _members.indexWhere((m) => m.loginId == updatedMember.loginId);
       if (index != -1) {
-        // 대표계정으로 설정되는 경우, 다른 프로필의 대표계정 설정 해제
         if (updatedMember.isMainProfile) {
           for (int i = 0; i < _members.length; i++) {
             if (i != index) {
@@ -355,12 +427,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
         _members[index] = updatedMember;
 
-        // 대표계정이 없는 경우 첫 번째 프로필을 대표계정으로 설정
         if (!_members.any((member) => member.isMainProfile)) {
           _members[0] = _members[0].copyWith(isMainProfile: true);
         }
-
-        _loadMainUserNickname();
       }
     });
   }
@@ -394,6 +463,10 @@ class _HomeScreenState extends State<HomeScreen> {
             relationship: mainMember.relationship,
             isMainProfile: mainMember.isMainProfile,
             acquaintances: [...mainMember.acquaintances, newAcquaintance],
+            healthMetrics: mainMember.healthMetrics,
+            loginId: mainMember.loginId,
+            password: mainMember.password,
+            ageRange: mainMember.ageRange,
           );
         }
       }
@@ -451,9 +524,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
+                    onPressed: () => Navigator.of(context).pop(),
                     style: TextButton.styleFrom(
                       backgroundColor: const Color(0xFF666666),
                       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -616,10 +687,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       onToggleExpanded: _toggleExpanded,
                       onAddProfile: _showAddProfileDialog,
                     ),
-                    AcquaintanceSection(
-                      mainMember: _members.firstWhere((member) => member.isMainProfile),
-                      onAddAcquaintance: _handleAddAcquaintance,
-                    ),
+                    if (_members.isNotEmpty)
+                      AcquaintanceSection(
+                        mainMember: _members.firstWhere(
+                          (member) => member.isMainProfile,
+                          orElse: () => _members.first,
+                        ),
+                        onAddAcquaintance: _handleAddAcquaintance,
+                      ),
                     const SizedBox(height: 30),
                     Text(
                       '${_nickname}님, 요즘 궁금할 만한 것들을 알려드릴게요!',
