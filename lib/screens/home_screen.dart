@@ -3,7 +3,7 @@ import 'member_screen.dart';
 import 'profile_screen.dart';
 import 'card_news_screen.dart';
 import 'calendar_screen.dart';
-import 'chat_screen.dart';
+import 'chat_onboarding_screen.dart';
 import '../components/card_slider.dart';
 import '../constants/card_data.dart';
 import '../constants/app_colors.dart';
@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _bottomScreens = [
     const HomeScreen(),
     const CalendarScreen(),
-    const ChatScreen(),
+    const ChatOnboardingScreen(),
   ];
 
   @override
