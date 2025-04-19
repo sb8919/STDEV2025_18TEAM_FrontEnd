@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'screens/splash_screen.dart';
+import 'screens/home_screen.dart';
+import 'constants/app_colors.dart';
 import 'providers/calendar_provider.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
   runApp(const MyApp());
 }
 
@@ -25,23 +19,20 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
       ],
       child: MaterialApp(
-        title: 'Medit',
-        debugShowCheckedModeBanner: false,
+        title: 'STDEV2025 18TEAM',
         theme: ThemeData(
-          primarySwatch: Colors.purple,
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            iconTheme: IconThemeData(color: Colors.black),
-            titleTextStyle: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          primarySwatch: Colors.blue,
+          scaffoldBackgroundColor: AppColors.scaffoldBackground,
         ),
-        home: const SplashScreen(),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ko', 'KR'),
+        ],
+        home: const HomeScreen(),
       ),
     );
   }
