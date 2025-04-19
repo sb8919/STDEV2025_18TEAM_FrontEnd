@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_info_model.dart';
 import '../home/home_screen.dart';
 import '../../services/api_service.dart';
+import '../../constants/app_colors.dart';
 import 'dart:convert';
 
 class UserInfo2Screen extends StatefulWidget {
@@ -16,18 +17,18 @@ class UserInfo2Screen extends StatefulWidget {
 
 class _UserInfo2ScreenState extends State<UserInfo2Screen> {
   final List<String> _symptoms = [
-    '없음',
+    '심장 질환 ex) 협심증, 심부전 등',
+    '뇌혈관 질환 ex) 뇌졸중 등',
+    '호흡기 질환 ex) 천식, 만성폐쇄성폐질환 등',
+    '간 질환 ex) 간염, 지방간, 간경화 등',
+    '신장 질환 ex) 만성신부전, 투석 중',
+    '정신 건강 질환 ex) 우울증, 불안장애 등',
+    '알레르기 질환 ex) 음식 알레르기, 약물 알레르기 등',
     '고혈압',
     '당뇨병',
-    '심장 질환',
-    '뇌혈관 질환',
-    '호흡기 질환',
-    '간 질환',
-    '신장 질환',
-    '정신 건강 질환',
-    '알레르기 질환',
     '임신 또는 수유 중',
     '기타 (직접 입력)',
+    '없음',
   ];
 
   final Set<String> _selectedSymptoms = {};
@@ -102,21 +103,28 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              decoration: const BoxDecoration(
-                color: Color(0xFFD6D6D6),
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: AppColors.thirdColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(0),
                   topRight: Radius.circular(12),
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
                 ),
               ),
-              child: const Text(
-                '복수응답 어려게 선택이 가능해요',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                  children: [
+                    TextSpan(
+                      text: '복수응답',
+                      style: TextStyle(color: AppColors.primary),
+                    ),
+                    const TextSpan(
+                      text: ' 여러개 선택이 가능해요',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -127,114 +135,119 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
               itemCount: _symptoms.length + (_isCustomInputVisible ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == _symptoms.length && _isCustomInputVisible) {
-                  // 직접 입력한 항목 표시
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF005BAC),
-                      ),
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        _customSymptomController.text,
-                        style: const TextStyle(
-                          color: Color(0xFF005BAC),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      trailing: const Icon(Icons.check_circle, color: Color(0xFF005BAC)),
-                      onTap: () {
-                        setState(() {
-                          _selectedSymptoms.remove(_customSymptomController.text);
-                          _isCustomInputVisible = false;
-                          _customSymptomController.clear();
-                        });
-                      },
-                    ),
-                  );
+                  return _buildSymptomTile(_customSymptomController.text, true, isCustom: true);
                 }
 
                 final symptom = _symptoms[index];
                 final isSelected = _selectedSymptoms.contains(symptom);
-                
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? const Color(0xFF005BAC) : Colors.grey[300]!,
-                    ),
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      symptom,
-                      style: TextStyle(
-                        color: isSelected ? const Color(0xFF005BAC) : Colors.black,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    trailing: isSelected
-                        ? const Icon(Icons.check_circle, color: Color(0xFF005BAC))
-                        : Icon(Icons.circle_outlined, color: Colors.grey[400]),
-                    onTap: () {
-                      if (symptom == '기타 (직접 입력)') {
-                        _showCustomInputDialog();
-                      } else if (symptom == '없음') {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedSymptoms.remove(symptom);
-                          } else {
-                            _selectedSymptoms.clear();
-                            _selectedSymptoms.add(symptom);
-                            _isCustomInputVisible = false;
-                            _customSymptomController.clear();
-                          }
-                        });
-                      } else {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedSymptoms.remove(symptom);
-                          } else {
-                            if (_selectedSymptoms.contains('없음')) {
-                              _selectedSymptoms.remove('없음');
-                            }
-                            _selectedSymptoms.add(symptom);
-                          }
-                        });
-                      }
-                    },
-                  ),
-                );
+                return _buildSymptomTile(symptom, isSelected);
               },
             ),
-            const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
                 onPressed: _saveAllUserInfo,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF005BAC),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: const Text(
                   '저장하기',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSymptomTile(String symptom, bool isSelected, {bool isCustom = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isSelected ? AppColors.thirdColor : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: isSelected ? null : Border.all(color: Colors.grey[300]!),
+      ),
+      child: ListTile(
+        title: symptom.contains('ex)')
+            ? RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: symptom.substring(0, symptom.indexOf('ex)')),
+                style: TextStyle(
+                  color: isSelected ? AppColors.primary : Colors.black,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              TextSpan(
+                text: 'ex)',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isSelected ? AppColors.primary : Colors.black54,
+                ),
+              ),
+              TextSpan(
+                text: symptom.substring(symptom.indexOf('ex)') + 3),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? AppColors.primary : Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        )
+            : Text(
+          symptom,
+          style: TextStyle(
+            color: isSelected ? AppColors.primary : Colors.black,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        trailing: isSelected
+            ? Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primary,
+          ),
+          padding: const EdgeInsets.all(4),
+          child: const Icon(Icons.check, color: Colors.white, size: 16),
+        )
+            : Icon(Icons.circle_outlined, color: Colors.grey[400]),
+        onTap: () {
+          setState(() {
+            if (isCustom) {
+              _selectedSymptoms.remove(symptom);
+              _isCustomInputVisible = false;
+              _customSymptomController.clear();
+            } else if (symptom == '기타 (직접 입력)') {
+              _showCustomInputDialog();
+            } else if (symptom == '없음') {
+              if (isSelected) {
+                _selectedSymptoms.remove(symptom);
+              } else {
+                _selectedSymptoms.clear();
+                _selectedSymptoms.add(symptom);
+                _isCustomInputVisible = false;
+                _customSymptomController.clear();
+              }
+            } else {
+              if (isSelected) {
+                _selectedSymptoms.remove(symptom);
+              } else {
+                _selectedSymptoms.remove('없음');
+                _selectedSymptoms.add(symptom);
+              }
+            }
+          });
+        },
       ),
     );
   }
@@ -249,31 +262,19 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
     );
 
     try {
-      // Convert age string to age range
       String ageRange = _convertAgeToRange(userInfo.age);
-      
-      // Create member object for API request
       final member = {
         'login_id': userInfo.loginId,
         'nickname': userInfo.nickname,
-        'password': 'default123', // You might want to add password field in the UI
+        'password': 'default123',
         'age_range': ageRange,
         'gender': userInfo.gender,
         'usual_illness': userInfo.symptoms,
       };
 
-      print('Sending user data to API: $member');
-
-      // Send POST request to /users/
       final response = await ApiService.registerUser(member);
-
       if (response != null) {
-        print('Successfully received response: $response');
-        
-        // Save user info locally
         final prefs = await SharedPreferences.getInstance();
-        
-        // Save user data as JSON
         final userData = {
           'loginId': userInfo.loginId,
           'nickname': userInfo.nickname,
@@ -282,43 +283,28 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
           'ageRange': ageRange,
           'symptoms': userInfo.symptoms,
         };
-        
         await prefs.setString('user_data', json.encode(userData));
         await prefs.setBool('isFirstTime', false);
         await prefs.setBool('is_onboarding_completed', true);
         await prefs.setString('login_id', userInfo.loginId);
 
-        // Navigate to home screen
         if (mounted) {
-          print('Navigating to HomeScreen');
-          // Clear all existing routes and push HomeScreen
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-              settings: const RouteSettings(name: '/home'),
-            ),
-            (Route<dynamic> route) => false,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+                (route) => false,
           );
         }
       } else {
-        print('Registration failed - response is null');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('회원가입에 실패했습니다. 다시 시도해주세요.'),
-              duration: Duration(seconds: 2),
-            ),
+            const SnackBar(content: Text('회원가입에 실패했습니다. 다시 시도해주세요.'), duration: Duration(seconds: 2)),
           );
         }
       }
     } catch (e) {
-      print('Error in _saveAllUserInfo: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('오류가 발생했습니다. 다시 시도해주세요.'),
-            duration: Duration(seconds: 2),
-          ),
+          const SnackBar(content: Text('오류가 발생했습니다. 다시 시도해주세요.'), duration: Duration(seconds: 2)),
         );
       }
     }
@@ -341,7 +327,7 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
       case '60대 이상':
         return '60-99';
       default:
-        return '20-29'; // Default case
+        return '20-29';
     }
   }
-} 
+}
