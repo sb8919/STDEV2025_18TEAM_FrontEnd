@@ -286,6 +286,7 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
         await prefs.setString('user_data', json.encode(userData));
         await prefs.setBool('isFirstTime', false);
         await prefs.setBool('is_onboarding_completed', true);
+        await prefs.setString('login_id', userInfo.loginId);
 
         // Navigate to home screen
         if (mounted) {

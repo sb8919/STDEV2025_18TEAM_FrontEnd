@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stdev2025_18team_frontend/constants/app_colors.dart';
+import '../services/chat_service.dart';
 import '../widgets/body_part_selector.dart';
+import 'dart:convert';
 
 class ChatScreen extends StatefulWidget {
   final Set<BodyPart> selectedBodyParts;
@@ -23,17 +26,20 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
-  final ScrollController _scrollController = ScrollController();
+  final ChatService _chatService = ChatService();
   bool _isLoading = false;
+  String? _conversationId;
+  String? _userId;
+  String? _loginId;
 
   @override
   void initState() {
     super.initState();
-    _sendInitialMessage();
+    _loadUserInfo();
   }
 
-  void _sendInitialMessage() {
-    final bodyParts = widget.selectedBodyParts.map((part) {
+  String _bodyPartToKorean() {
+    return widget.selectedBodyParts.map((part) {
       switch (part) {
         case BodyPart.head:
           return '머리';
@@ -51,303 +57,331 @@ class _ChatScreenState extends State<ChatScreen> {
           return '';
       }
     }).join(', ');
-
-    final message = '선택하신 부위는 $bodyParts 입니다. 어떤 증상이 있으신가요?';
-    _addMessage(message, isUser: false);
   }
 
-  void _addMessage(String text, {bool isUser = true}) {
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    _loginId = prefs.getString('login_id');
+    
+    print('Loaded login ID: $_loginId');
+    
+    if (_loginId == null) {
+      _addBotMessage('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+      return;
+    }
+    
+    _initializeConversation();
+  }
+
+  Future<void> _initializeConversation() async {
+    if (_loginId == null) return;
+    
+    setState(() => _isLoading = true);
+    try {
+      final initialMessage = '${_bodyPartToKorean()} 부위에 ${widget.symptom} 증상이 ${widget.duration} 동안 ${widget.painIntensity.toStringAsFixed(1)} 강도로 느껴졌군요.\n무엇이 궁금하신가요?';
+      
+      print('Creating conversation with login ID: $_loginId');
+      final response = await _chatService.createConversation(_loginId!, messageContent: initialMessage);
+      print('Conversation created: $response');
+      
+      _conversationId = response['id'];
+      _userId = response['user_id'];
+      
+      // AI의 첫 메시지 표시
+      if (response['conversation_message'] != null) {
+        final aiMessage = response['conversation_message'];
+        _addBotMessage(aiMessage['content']);
+      }
+    } catch (e) {
+      print('Error in _initializeConversation: $e');
+      _addBotMessage('죄송합니다. 서버와의 연결에 문제가 발생했습니다.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _addBotMessage(String text) {
     setState(() {
-      _messages.add(ChatMessage(text: text, isUser: isUser));
+      _messages.add(ChatMessage(text: text, isUser: false));
     });
+  }
+
+  void _addUserMessage(String text) {
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: true));
+    });
+  }
+
+  Future<void> _handleSend() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _conversationId == null || _loginId == null) return;
+
+    _addUserMessage(text);
     _messageController.clear();
 
-    // 첫 번째 AI 응답
-    Future.delayed(const Duration(milliseconds: 800), () {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: '말씀해 주신 증상으로 보아\n다음과 같은 질환을 의심해볼 수 있습니다:\n\n'
-                '1. XX 증후군 (60%)\n'
-                '2. YY 질환 (30%)\n'
-                '3. ZZ 증상 (10%)\n\n'
-                '정확한 진단을 위해 전문의 상담을 추천드립니다.',
-            isUser: false,
-          ),
-        );
-      });
-    });
+    setState(() => _isLoading = true);
 
-    // 두 번째 AI 응답
-    Future.delayed(const Duration(milliseconds: 1600), () {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: '근처에 있는 전문병원을 찾아보시겠어요?',
-            isUser: false,
-            showMap: true,
-            mapOptions: ['예', '아니요'],
-          ),
-        );
-      });
-    });
-
-    // 스크롤을 맨 아래로 이동
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
+    try {
+      final response = await _chatService.sendMessageToUserConversation(
+        _loginId!,
+        _conversationId!,
+        text,
       );
-    });
+      
+      if (response['conversation_message'] != null) {
+        _addBotMessage(response['conversation_message']['content']);
+      }
+    } catch (e) {
+      print('Error sending message: $e');
+      _addBotMessage('죄송합니다. 메시지 전송에 실패했습니다.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final dateString =
+        '${today.year}년 ${today.month}월 ${today.day}일 ${["일", "월", "화", "수", "목", "금", "토"][today.weekday % 7]}요일';
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          color: Colors.black,
-          onPressed: () => Navigator.pop(context),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            title: const Text(
+              '메딧톡',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            leading: const SizedBox(),
+            actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.close,
+                  color: Colors.black54,
+                  size: 24,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return _messages[index].buildWidget();
-              },
-            ),
-          ),
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Colors.grey, width: 0.5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 날짜 표시
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      dateString,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: _buildTextComposer(),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildTextComposer() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Text('Plus'),
-            onPressed: () {
-              // Plus 버튼 기능 구현
-            },
-          ),
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: const InputDecoration(
-                hintText: '메시지를 입력하세요',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+            // 채팅 목록
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) => _messages[index].buildWidget(),
               ),
-              onSubmitted: _handleSubmitted,
             ),
-          ),
-          TextButton(
-            onPressed: () => _handleSubmitted(_messageController.text),
-            child: const Text(
-              'send',
-              style: TextStyle(color: Colors.black),
+
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Text('조금만 기다려주세요...', style: TextStyle(color: Colors.grey)),
+              ),
+
+            // 입력창
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.grey, width: 0.5)),
+              ),
+              child: Row(
+                children: [
+                  // + 버튼
+                  IconButton(
+                    icon: Image.asset(
+                      'assets/images/icon/plus.png',
+                      width: 30,
+                      height: 30,
+                    ),
+                    onPressed: () {
+                      // TODO: 추가 기능 구현
+                    },
+                  ),
+                  // 입력 필드
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: TextField(
+                        controller: _messageController,
+                        decoration: const InputDecoration(
+                          hintText: '메시지를 입력하세요',
+                          hintStyle: TextStyle(color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        onSubmitted: (_) => _handleSend(),
+                      ),
+                    ),
+                  ),
+                  // 마이크 버튼
+                  IconButton(
+                    icon: Image.asset(
+                      'assets/images/icon/mic.png',
+                      width: 30,
+                      height: 30,
+                    ),
+                    onPressed: () {
+                      // TODO: 음성 입력 기능 구현
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
-  }
-
-  void _handleSubmitted(String text) {
-    if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(ChatMessage(text: text, isUser: true));
-    });
-    _messageController.clear();
-
-    // 첫 번째 AI 응답
-    Future.delayed(const Duration(milliseconds: 800), () {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: '말씀해 주신 증상으로 보아\n다음과 같은 질환을 의심해볼 수 있습니다:\n\n'
-                '1. XX 증후군 (60%)\n'
-                '2. YY 질환 (30%)\n'
-                '3. ZZ 증상 (10%)\n\n'
-                '정확한 진단을 위해 전문의 상담을 추천드립니다.',
-            isUser: false,
-          ),
-        );
-      });
-    });
-
-    // 두 번째 AI 응답
-    Future.delayed(const Duration(milliseconds: 1600), () {
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: '근처에 있는 전문병원을 찾아보시겠어요?',
-            isUser: false,
-            showMap: true,
-            mapOptions: ['예', '아니요'],
-          ),
-        );
-      });
-    });
-
-    // 스크롤을 맨 아래로 이동
-    Future.delayed(const Duration(milliseconds: 100), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
   }
 }
 
 class ChatMessage {
   final String text;
   final bool isUser;
-  final List<String>? options;
-  final bool showMap;
-  final List<String>? mapOptions;
 
-  ChatMessage({
-    required this.text,
-    required this.isUser,
-    this.options,
-    this.showMap = false,
-    this.mapOptions,
-  });
+  ChatMessage({required this.text, required this.isUser});
 
   Widget buildWidget() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Column(
-        crossAxisAlignment:
-            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment:
-                isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              if (!isUser)
-                Container(
-                  margin: const EdgeInsets.only(right: 8.0),
+    if (isUser) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.zero,
+            ),
+          ),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.only(right: 80,top:20 ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 프로필 영역
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                ClipOval(
                   child: Image.asset(
                     'assets/images/charactor/medit_circle.png',
-                    width: 40,
-                    height: 40,
+                    width: 46,
+                    height: 46,
                   ),
                 ),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  child: Text(
-                    text,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                    ),
+                const SizedBox(width: 8),
+                const Text(
+                  '메딧톡',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (options != null) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: options!.map((option) {
-                return OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  child: Text(option),
-                );
-              }).toList(),
+              ],
             ),
-          ],
-          if (showMap) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            // 메시지 말풍선
             Container(
-              width: double.infinity,
-              height: 200,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              margin: const EdgeInsets.only(left: 0), // 왼쪽 마진 제거
+              constraints: const BoxConstraints(maxWidth: 270), // 최대 너비 설정
               decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFFC3CCF5),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.zero,
+                  topRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('관련 이미지'),
-                  if (mapOptions != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: mapOptions!.map((option) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: Text(option),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-          if (showMap && mapOptions == null)
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              child: TextButton(
-                onPressed: () {},
-                child: const Text('리포트 요약하기'),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.black,
                 ),
               ),
             ),
-        ],
-      ),
-    );
+            const SizedBox(height: 12),
+          ],
+        ),
+      );
+    }
   }
 }
