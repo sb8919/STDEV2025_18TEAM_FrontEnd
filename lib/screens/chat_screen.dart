@@ -43,8 +43,10 @@ class _ChatScreenState extends State<ChatScreen> {
       switch (part) {
         case BodyPart.head:
           return '머리';
-        case BodyPart.body:
-          return '몸통';
+        case BodyPart.chest:
+          return '가슴';
+        case BodyPart.abdomen:
+          return '배';
         case BodyPart.leftArm:
           return '왼팔';
         case BodyPart.rightArm:

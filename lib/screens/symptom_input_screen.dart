@@ -23,9 +23,10 @@ class _SymptomInputScreenState extends State<SymptomInputScreen> {
 
   // 터치 영역 크기 상수
   static const Map<BodyPart, Size> touchAreaSizes = {
-    BodyPart.head: Size(250, 150),
-    BodyPart.body: Size(120, 140),
-    BodyPart.leftArm: Size(50, 80),
+    BodyPart.head: Size(190, 130),
+    BodyPart.chest: Size(80, 40),
+    BodyPart.abdomen: Size(90, 70),
+    BodyPart.leftArm: Size(30, 80),
     BodyPart.rightArm: Size(80, 90),
     BodyPart.leftLeg: Size(70, 80),
     BodyPart.rightLeg: Size(70, 80),
@@ -33,12 +34,13 @@ class _SymptomInputScreenState extends State<SymptomInputScreen> {
 
   // 터치 영역 위치 상수
   static const Map<BodyPart, Offset> touchAreaPositions = {
-    BodyPart.head: Offset(0, 80),
-    BodyPart.body: Offset(0, 230),
-    BodyPart.leftArm: Offset(-160, 230),
+    BodyPart.head: Offset(0, 110),
+    BodyPart.chest: Offset(0, 230),
+    BodyPart.abdomen: Offset(0, 273),
+    BodyPart.leftArm: Offset(-120, 230),
     BodyPart.rightArm: Offset(180, 220),
-    BodyPart.leftLeg: Offset(-170, 300),
-    BodyPart.rightLeg: Offset(150, 310),
+    BodyPart.leftLeg: Offset(-140, 300),
+    BodyPart.rightLeg: Offset(150, 300),
   };
 
   void _onPartSelected(BodyPart part, Offset localPosition) {
@@ -127,51 +129,6 @@ class _SymptomInputScreenState extends State<SymptomInputScreen> {
               }
             },
           ),
-          actions: [
-            IconButton(
-              icon: Icon(showTouchAreas ? Icons.visibility : Icons.visibility_off),
-              onPressed: () {
-                setState(() {
-                  showTouchAreas = !showTouchAreas;
-                });
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('터치 영역 설정'),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('터치 영역 투명도'),
-                        Slider(
-                          value: touchAreaOpacity,
-                          min: 0.1,
-                          max: 0.5,
-                          divisions: 4,
-                          label: (touchAreaOpacity * 100).round().toString() + '%',
-                          onChanged: (value) {
-                            setState(() {
-                              touchAreaOpacity = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('확인'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
         ),
         body: SafeArea(
           child: Column(
@@ -227,7 +184,7 @@ class _SymptomInputScreenState extends State<SymptomInputScreen> {
                       '선택 완료',
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),

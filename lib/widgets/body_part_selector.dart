@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 enum BodyPart {
   none,
   head,
-  body,
+  chest,
+  abdomen,
   leftArm,
   rightArm,
   leftLeg,
@@ -17,8 +18,10 @@ extension BodyPartExtension on BodyPart {
         return '선택 안함';
       case BodyPart.head:
         return '머리';
-      case BodyPart.body:
-        return '몸통';
+      case BodyPart.chest:
+        return '가슴';
+      case BodyPart.abdomen:
+        return '배';
       case BodyPart.leftArm:
         return '왼팔';
       case BodyPart.rightArm:
@@ -50,8 +53,10 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
     switch (part) {
       case BodyPart.head:
         return '머리';
-      case BodyPart.body:
-        return '몸통';
+      case BodyPart.chest:
+        return '가슴';
+      case BodyPart.abdomen:
+        return '배';
       case BodyPart.leftArm:
         return '왼팔';
       case BodyPart.rightArm:
@@ -103,11 +108,24 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
                   ),
                 ),
 
-                // Body
+                // Chest
                 Positioned(
                   top: 70,
                   child: GestureDetector(
-                    onTap: () => _selectPart(BodyPart.body),
+                    onTap: () => _selectPart(BodyPart.chest),
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.transparent,
+                    ),
+                  ),
+                ),
+
+                // Abdomen
+                Positioned(
+                  top: 100,
+                  child: GestureDetector(
+                    onTap: () => _selectPart(BodyPart.abdomen),
                     child: Container(
                       width: 60,
                       height: 60,
@@ -221,12 +239,19 @@ class BodyPainter extends CustomPainter {
       getPaint(BodyPart.head),
     );
 
-    // Body
-    final bodyRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(size.width / 2 - 30, 70, 60, 60),
+    // Chest
+    final chestRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width / 2 - 30, 70, 60, 30),
       const Radius.circular(10),
     );
-    canvas.drawRRect(bodyRect, getPaint(BodyPart.body));
+    canvas.drawRRect(chestRect, getPaint(BodyPart.chest));
+
+    // Abdomen
+    final abdomenRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(size.width / 2 - 30, 100, 60, 30),
+      const Radius.circular(10),
+    );
+    canvas.drawRRect(abdomenRect, getPaint(BodyPart.abdomen));
 
     // Left Arm
     final leftArm = RRect.fromRectAndRadius(

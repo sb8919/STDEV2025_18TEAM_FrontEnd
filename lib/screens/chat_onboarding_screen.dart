@@ -78,7 +78,7 @@ class _ChatOnboardingScreenState extends State<ChatOnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: 34),
-                  Image.asset('assets/images/charactor/hello_medit.png', width: 200),
+                  Image.asset('assets/images/charactor/hello_medit.png', width: 280),
 
                   const SizedBox(height: 40),
                   SizedBox(
@@ -96,7 +96,7 @@ class _ChatOnboardingScreenState extends State<ChatOnboardingScreen> {
                         '네, 해주세요',
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
@@ -118,7 +118,7 @@ class _ChatOnboardingScreenState extends State<ChatOnboardingScreen> {
                         '아니요, 직접질문할게요',
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ),
