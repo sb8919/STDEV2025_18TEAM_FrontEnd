@@ -14,6 +14,8 @@ import 'components/profile_section.dart';
 import 'components/news_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../../repositories/acquaintance_repository.dart';
+import 'components/profile_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late DateTime _startOfWeek;
   bool _isExpanded = false;
   Member? _selectedMember;
+  final _acquaintanceRepository = AcquaintanceRepository();
 
   // 프로필 추가를 위한 컨트롤러들
   final TextEditingController _newNicknameController = TextEditingController();
@@ -286,135 +289,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _showAddProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        String nickname = '';
-        String relationship = '가족';
-        String gender = '여';
-        String age = '';
-        String symptoms = '';
-
-        return AlertDialog(
-          title: const Text('프로필 추가하기'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: '닉네임',
-                    hintText: '닉네임을 입력하세요',
-                  ),
-                  onChanged: (value) => nickname = value,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: relationship,
-                  decoration: const InputDecoration(
-                    labelText: '관계',
-                  ),
-                  items: [
-                    '가족',
-                    '부모',
-                    '자녀',
-                    '배우자',
-                    '형제/자매',
-                    '친척',
-                    '친구',
-                    '지인',
-                  ].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      relationship = newValue;
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: gender,
-                  decoration: const InputDecoration(
-                    labelText: '성별',
-                  ),
-                  items: ['남', '여'].map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      gender = newValue;
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: '나이',
-                    hintText: '나이를 입력하세요',
-                    suffixText: '세',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => age = value,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: '증상',
-                    hintText: '증상을 쉼표로 구분하여 입력하세요',
-                  ),
-                  onChanged: (value) => symptoms = value,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (nickname.isNotEmpty && relationship.isNotEmpty && age.isNotEmpty) {
-                  final newMember = Member(
-                    nickname: nickname,
-                    relationship: relationship,
-                    gender: gender,
-                    age: int.tryParse(age) ?? 0,
-                    symptoms: symptoms.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
-                    isMainProfile: _members.isEmpty,
-                    acquaintances: [],
-                    healthMetrics: HealthMetrics(metrics: []),
-                    loginId: 'user${DateTime.now().millisecondsSinceEpoch}',
-                    password: 'defaultPassword',
-                    ageRange: '${(int.tryParse(age) ?? 0) ~/ 10 * 10}-${(int.tryParse(age) ?? 0) ~/ 10 * 10 + 9}',
-                  );
-                  setState(() {
-                    _members.add(newMember);
-                  });
-                  Navigator.of(context).pop();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('모든 필수 정보를 입력해주세요.'),
-                    ),
-                  );
-                }
-              },
-              child: const Text('추가'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _handleMemberUpdate(Member updatedMember) {
     setState(() {
@@ -433,6 +307,9 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!_members.any((member) => member.isMainProfile)) {
           _members[0] = _members[0].copyWith(isMainProfile: true);
         }
+      } else {
+        // 새 멤버 추가
+        _members.add(updatedMember);
       }
     });
   }
@@ -476,81 +353,174 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _handleInfoUpdate(Acquaintance acquaintance, String name, String relationship) async {
+    try {
+      final updatedAcquaintance = acquaintance.copyWith(
+        name: name,
+        relationship: relationship,
+      );
+      
+      await _acquaintanceRepository.updateAcquaintance(updatedAcquaintance);
+      
+      setState(() {
+        final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
+        if (mainMemberIndex != -1) {
+          final mainMember = _members[mainMemberIndex];
+          final updatedAcquaintances = mainMember.acquaintances.map((a) {
+            if (a.name == acquaintance.name) {
+              return updatedAcquaintance;
+            }
+            return a;
+          }).toList();
+          
+          _members[mainMemberIndex] = mainMember.copyWith(
+            acquaintances: updatedAcquaintances,
+          );
+        }
+      });
+    } catch (e) {
+      print('Error updating acquaintance info: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('지인 정보 업데이트에 실패했습니다.')),
+      );
+    }
+  }
+
+  void _handleAcquaintanceDelete(Acquaintance acquaintance) {
+    setState(() {
+      final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
+      if (mainMemberIndex != -1) {
+        final mainMember = _members[mainMemberIndex];
+        final updatedAcquaintances = List<Acquaintance>.from(mainMember.acquaintances)
+          ..removeWhere((a) => a.name == acquaintance.name);
+        
+        _members[mainMemberIndex] = mainMember.copyWith(
+          acquaintances: updatedAcquaintances,
+        );
+      }
+    });
+  }
+
   void _showNewsDetailModal(BuildContext context, CardNews news) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.0),
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  news.iconPath,
-                  width: 200,
-                  height: 200,
+        return Material(
+          type: MaterialType.transparency,
+          child: Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFD0D6F5),  // 더 진한 블루
+                    Color(0xFFE8ECFD),
+                    Color(0xFFFFFFFF),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  news.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 15,
+                    spreadRadius: 5,
+                    offset: const Offset(0, 5),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "자세한 가능성이 높아져 같이 병원을 위험!\n술 마시기 전후, 당일의 복용 금지를 추천해 드리요!",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF666666),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "대체 약으로는 이부프로펜 계열로 복용해, 현재 등을 추천해요.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF666666),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFF666666),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      news.iconPath,
+                      width: 200,
+                      height: 200,
                     ),
-                    child: const Text(
-                      "확인했어요!",
+                    const SizedBox(height: 20),
+                    Text(
+                      news.title,
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "자세한 가능성이 높아져 같이 병원을 위험!\n술 마시기 전후, 당일의 복용 금지를 추천해 드리요!",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "대체 약으로는 이부프로펜 계열로 복용해, 현재 등을 추천해요.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF666666),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          "확인했어요!",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
       },
     );
+  }
+
+  Future<void> _loadMainMember() async {
+    try {
+      final mainMember = _members.firstWhere(
+        (member) => member.isMainProfile,
+        orElse: () => _members.first,
+      );
+      
+      final updatedAcquaintances = await _acquaintanceRepository.getAcquaintances(mainMember.loginId);
+      
+      setState(() {
+        final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
+        if (mainMemberIndex != -1) {
+          _members[mainMemberIndex] = mainMember.copyWith(
+            acquaintances: updatedAcquaintances,
+          );
+        }
+      });
+    } catch (e) {
+      print('Error loading main member: $e');
+    }
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -694,7 +664,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onMemberUpdate: _handleMemberUpdate,
                       onToggleMemberDetail: _toggleMemberDetail,
                       onToggleExpanded: _toggleExpanded,
-                      onAddProfile: _showAddProfileDialog,
+                      onAddProfile: () {},
                     ),
                     if (_members.isNotEmpty)
                       AcquaintanceSection(
@@ -703,6 +673,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           orElse: () => _members.first,
                         ),
                         onAddAcquaintance: _handleAddAcquaintance,
+                        onInfoUpdated: _handleInfoUpdate,
+                        onDelete: _handleAcquaintanceDelete,
                       ),
                     const SizedBox(height: 30),
                     Text(

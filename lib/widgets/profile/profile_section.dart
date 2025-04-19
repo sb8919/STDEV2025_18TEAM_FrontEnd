@@ -18,6 +18,19 @@ class _ProfileSectionState extends State<ProfileSection> {
   late TextEditingController _ageController;
   late String _selectedGender;
   late List<String> _selectedSymptoms;
+  late String _selectedRelationship;
+
+  final List<String> _relationships = [
+    '본인',
+    '미성년 자녀',
+    '부 (아버지)',
+    '모 (어머니)',
+    '배우자 (남편/아내)',
+    '자녀 (아들/딸)',
+    '형제자매',
+    '친구',
+    '직장 동료 / 룸메이트',
+  ];
 
   @override
   void initState() {
@@ -31,6 +44,7 @@ class _ProfileSectionState extends State<ProfileSection> {
     _ageController = TextEditingController();
     _selectedGender = '';
     _selectedSymptoms = [];
+    _selectedRelationship = '미성년 자녀';
   }
 
   @override
@@ -74,7 +88,7 @@ class _ProfileSectionState extends State<ProfileSection> {
       final newMember = Member(
         name: _nicknameController.text,
         nickname: _nicknameController.text,
-        relationship: '가족',
+        relationship: _selectedRelationship,
         gender: _selectedGender,
         age: int.tryParse(_ageController.text) ?? 0,
         symptoms: _selectedSymptoms,
@@ -194,10 +208,11 @@ class _ProfileSectionState extends State<ProfileSection> {
                 _buildEditForm(),
               ],
             ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Divider(height: 1, color: Colors.grey[300]),
-          ),
+          if (!_isEditing || _selectedMember != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Divider(height: 1, color: Colors.grey[300]),
+            ),
           InkWell(
             onTap: () {
               setState(() {
@@ -475,6 +490,36 @@ class _ProfileSectionState extends State<ProfileSection> {
             decoration: const InputDecoration(
               labelText: '닉네임',
               hintText: '닉네임을 입력하세요',
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('관계', style: TextStyle(fontSize: 14)),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedRelationship,
+                isExpanded: true,
+                items: _relationships.map((String relationship) {
+                  return DropdownMenuItem<String>(
+                    value: relationship,
+                    child: Text(relationship),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedRelationship = newValue;
+                    });
+                  }
+                },
+              ),
             ),
           ),
           const SizedBox(height: 16),

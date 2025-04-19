@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stdev2025_18team_frontend/constants/app_colors.dart';
 import '../models/health_record.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -182,7 +183,6 @@ class HealthRecordDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
                   ),
                 ),
                 SizedBox(height: 8),

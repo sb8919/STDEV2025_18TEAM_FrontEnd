@@ -30,9 +30,21 @@ class _ProfileCardState extends State<ProfileCard> {
   late TextEditingController _ageController;
   late TextEditingController _genderController;
   late TextEditingController _symptomsController;
-  late TextEditingController _relationshipController;
+  late String _selectedRelationship;
   late bool _isMainProfile;
   late String _selectedGender;
+
+  final List<String> _relationships = [
+    '미성년 자녀',
+    '가족',
+    '부모',
+    '자녀',
+    '배우자',
+    '형제/자매',
+    '친척',
+    '친구',
+    '지인',
+  ];
 
   @override
   void initState() {
@@ -46,7 +58,6 @@ class _ProfileCardState extends State<ProfileCard> {
     _ageController.dispose();
     _genderController.dispose();
     _symptomsController.dispose();
-    _relationshipController.dispose();
     super.dispose();
   }
 
@@ -55,7 +66,7 @@ class _ProfileCardState extends State<ProfileCard> {
     _ageController = TextEditingController(text: widget.member.age.toString());
     _genderController = TextEditingController(text: widget.member.gender);
     _symptomsController = TextEditingController(text: widget.member.symptoms.join(', '));
-    _relationshipController = TextEditingController(text: widget.member.relationship);
+    _selectedRelationship = widget.member.relationship;
     _isMainProfile = widget.member.isMainProfile;
     _selectedGender = widget.member.gender;
   }
@@ -89,7 +100,7 @@ class _ProfileCardState extends State<ProfileCard> {
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList(),
-      relationship: widget.member.relationship,
+      relationship: _selectedRelationship,
       isMainProfile: _isMainProfile,
       acquaintances: widget.member.acquaintances,
       healthMetrics: widget.member.healthMetrics,
@@ -167,6 +178,8 @@ class _ProfileCardState extends State<ProfileCard> {
         children: [
           _buildInfoRow('닉네임', widget.member.nickname, _nicknameController),
           const SizedBox(height: 8),
+          _buildInfoRow('관계', widget.member.relationship, null, isRelationship: true),
+          const SizedBox(height: 8),
           _buildInfoRow('성별', widget.member.gender, _genderController),
           const SizedBox(height: 8),
           _buildInfoRow('나이', '만 ${widget.member.age}세', _ageController, suffix: '세'),
@@ -217,7 +230,7 @@ class _ProfileCardState extends State<ProfileCard> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, TextEditingController controller, {String? suffix, String? hint}) {
+  Widget _buildInfoRow(String label, String value, TextEditingController? controller, {String? suffix, String? hint, bool isRelationship = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,20 +246,47 @@ class _ProfileCardState extends State<ProfileCard> {
         ),
         Expanded(
           child: _isEditing
-              ? TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                    suffix: suffix != null ? Text(suffix) : null,
-                    hintText: hint,
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  style: const TextStyle(fontSize: 14),
-                )
+              ? isRelationship
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedRelationship,
+                          isExpanded: true,
+                          items: _relationships.map((String relationship) {
+                            return DropdownMenuItem<String>(
+                              value: relationship,
+                              child: Text(relationship),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedRelationship = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    )
+                  : TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                        suffix: suffix != null ? Text(suffix) : null,
+                        hintText: hint,
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                      style: const TextStyle(fontSize: 14),
+                    )
               : Text(
                   value,
                   style: const TextStyle(fontSize: 14),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../models/member.dart';
 import 'profile_card.dart';
 
-class ProfileSection extends StatelessWidget {
+class ProfileSection extends StatefulWidget {
   final List<Member> members;
   final Member? selectedMember;
   final bool isExpanded;
@@ -23,180 +23,16 @@ class ProfileSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (members.isEmpty) {
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildAddProfileButton(),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Divider(height: 1, color: Colors.grey),
-            ),
-            _buildExpandCollapseButton(),
-          ],
-        ),
-      );
-    }
+  State<ProfileSection> createState() => _ProfileSectionState();
+}
 
-    final mainProfile = members.firstWhere((member) => member.isMainProfile);
-    final otherProfiles = members.where((member) => !member.isMainProfile).toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: !isExpanded
-                    ? BorderRadius.circular(15)
-                    : const BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15),
-                      ),
-              ),
-              child: ProfileCard(
-                member: mainProfile,
-                isExpanded: selectedMember == mainProfile,
-                onToggle: () => onToggleMemberDetail(mainProfile),
-                showAllProfiles: isExpanded,
-                onShowAllToggle: onToggleExpanded,
-                onMemberUpdate: onMemberUpdate,
-              ),
-            ),
-            if (isExpanded) ...[
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: Colors.grey),
-              ),
-              ...otherProfiles.map((member) => Column(
-                children: [
-                  ProfileCard(
-                    member: member,
-                    isExpanded: selectedMember == member,
-                    onToggle: () => onToggleMemberDetail(member),
-                    showAllProfiles: isExpanded,
-                    onShowAllToggle: onToggleExpanded,
-                    onMemberUpdate: onMemberUpdate,
-                  ),
-                  if (member != otherProfiles.last)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Divider(height: 1, color: Colors.grey),
-                    ),
-                ],
-              )),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1, color: Colors.grey),
-              ),
-              _buildAddProfileButton(),
-            ],
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Divider(height: 1, color: Colors.grey),
-            ),
-            _buildExpandCollapseButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddProfileButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onAddProfile,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                '프로필 추가하기',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Container(
-                width: 15,
-                height: 15,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFA9A9A9),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.add,
-                    size: 13,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpandCollapseButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(15),
-          bottomRight: Radius.circular(15),
-        ),
-      ),
-      child: GestureDetector(
-        onTap: onToggleExpanded,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Icon(
-            isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-            color: Colors.grey[600],
-          ),
-        ),
-      ),
-    );
-  }
-
+class _ProfileSectionState extends State<ProfileSection> {
   void _showAddProfileDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) {
         String nickname = '';
-        String relationship = '가족';
+        String relationship = '미성년 자녀';  // 기본값을 '미성년 자녀'로 설정
         String gender = '여';
         String age = '';
         String symptoms = '';
@@ -220,7 +56,8 @@ class ProfileSection extends StatelessWidget {
                   decoration: const InputDecoration(
                     labelText: '관계',
                   ),
-                  items: [
+                  items: const [
+                    '미성년 자녀',  // 첫 번째 항목으로 이동
                     '가족',
                     '부모',
                     '자녀',
@@ -301,7 +138,7 @@ class ProfileSection extends StatelessWidget {
                     password: 'defaultPassword',
                     ageRange: '${(int.tryParse(age) ?? 0) ~/ 10 * 10}-${(int.tryParse(age) ?? 0) ~/ 10 * 10 + 9}',
                   );
-                  onMemberUpdate(newMember);
+                  widget.onMemberUpdate(newMember);
                   Navigator.of(context).pop();
                 }
               },
@@ -310,6 +147,167 @@ class ProfileSection extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildAddProfileButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showAddProfileDialog(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                '프로필 추가하기',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Container(
+                width: 15,
+                height: 15,
+                decoration: const BoxDecoration(
+                  color: Color(0XFF394BF5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.add,
+                    size: 13,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.members.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            _buildAddProfileButton(),
+            _buildExpandCollapseButton(),
+          ],
+        ),
+      );
+    }
+
+    final mainProfile = widget.members.firstWhere((member) => member.isMainProfile);
+    final otherProfiles = widget.members.where((member) => !member.isMainProfile).toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: !widget.isExpanded
+                    ? BorderRadius.circular(15)
+                    : const BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      ),
+              ),
+              child: ProfileCard(
+                member: mainProfile,
+                isExpanded: widget.selectedMember == mainProfile,
+                onToggle: () => widget.onToggleMemberDetail(mainProfile),
+                showAllProfiles: widget.isExpanded,
+                onShowAllToggle: widget.onToggleExpanded,
+                onMemberUpdate: widget.onMemberUpdate,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Divider(height: 1, color: Color(0xFFC3CCF5)),
+            ),
+            if (widget.isExpanded) ...[
+              ...otherProfiles.map((member) => Column(
+                children: [
+                  ProfileCard(
+                    member: member,
+                    isExpanded: widget.selectedMember == member,
+                    onToggle: () => widget.onToggleMemberDetail(member),
+                    showAllProfiles: widget.isExpanded,
+                    onShowAllToggle: widget.onToggleExpanded,
+                    onMemberUpdate: widget.onMemberUpdate,
+                  ),
+                  if (member != otherProfiles.last)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(height: 0.5, color: Color(0xFFC3CCF5)),
+                    ),
+                ],
+              )),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Divider(height: 0.5, color: Color(0xFFC3CCF5)),
+              ),
+              _buildAddProfileButton(),
+            ],
+            _buildExpandCollapseButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpandCollapseButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(15),
+          bottomRight: Radius.circular(15),
+        ),
+      ),
+      child: GestureDetector(
+        onTap: widget.onToggleExpanded,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Icon(
+            widget.isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
     );
   }
 } 

@@ -77,6 +77,20 @@ class Acquaintance {
     required this.imagePath,
     required this.healthMetrics,
   });
+
+  Acquaintance copyWith({
+    String? name,
+    String? relationship,
+    String? imagePath,
+    HealthMetrics? healthMetrics,
+  }) {
+    return Acquaintance(
+      name: name ?? this.name,
+      relationship: relationship ?? this.relationship,
+      imagePath: imagePath ?? this.imagePath,
+      healthMetrics: healthMetrics ?? this.healthMetrics,
+    );
+  }
 }
 
 class HealthMetrics {
