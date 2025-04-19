@@ -651,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      appBar: _bottomNavIndex == 0 ? _buildAppBar() : null,
       body: _bottomNavIndex == 0
           ? Padding(
               padding: const EdgeInsets.all(20.0),
@@ -687,13 +687,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    ...newsList.map((news) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: GestureDetector(
-                        onTap: () => _showNewsDetailModal(context, news),
-                        child: NewsCard(news: news),
-                      ),
-                    )).toList(),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: newsList.length,
+                      itemBuilder: (context, index) => NewsCard(news: newsList[index]),
+                    ),
                   ],
                 ),
               ),

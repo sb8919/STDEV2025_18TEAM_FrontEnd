@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-class CalendarHeader extends StatelessWidget {
+class CalendarHeader extends StatefulWidget {
   final DateTime focusedDate;
   final Function(DateTime) onMonthChanged;
 
@@ -12,13 +14,36 @@ class CalendarHeader extends StatelessWidget {
   });
 
   @override
+  State<CalendarHeader> createState() => _CalendarHeaderState();
+}
+
+class _CalendarHeaderState extends State<CalendarHeader> {
+  String _nickname = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserNickname();
+  }
+
+  Future<void> _loadUserNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userData = prefs.getString('user_data');
+    if (userData != null) {
+      final decodedData = json.decode(userData);
+      setState(() {
+        _nickname = decodedData['nickname'] ?? '';
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -26,12 +51,12 @@ class CalendarHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.asset(
-                    'assets/images/logos/logo.png',
+                    'assets/images/logos/logo_nonback.png',
                     width: 50,
                     height: 50,
                   ),
                   Text(
-                    '닉네임 님,',
+                    '$_nickname 님,',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
@@ -50,9 +75,9 @@ class CalendarHeader extends StatelessWidget {
                 ],
               ),
               Image.asset(
-                'assets/images/charactor/medit.png',
-                width: 100,
-                height: 100,
+                'assets/images/charactor/stand_medit.png',
+                width: 110,
+                height: 130,
               ),
             ],
           ),
@@ -66,14 +91,14 @@ class CalendarHeader extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 onPressed: () {
-                  onMonthChanged(DateTime(focusedDate.year, focusedDate.month - 1, 1));
+                  widget.onMonthChanged(DateTime(widget.focusedDate.year, widget.focusedDate.month - 1, 1));
                 },
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '${focusedDate.month}',
+                    '${widget.focusedDate.month}',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -94,7 +119,7 @@ class CalendarHeader extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 onPressed: () {
-                  onMonthChanged(DateTime(focusedDate.year, focusedDate.month + 1, 1));
+                  widget.onMonthChanged(DateTime(widget.focusedDate.year, widget.focusedDate.month + 1, 1));
                 },
               ),
             ],
