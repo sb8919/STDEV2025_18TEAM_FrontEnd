@@ -18,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingPage(
       title: '반가워요! 지금부터\n이상 신호들을 번역하러 가볼까요?',
       description: '몸이 나에게 보내는 신호들을 확인해봐요',
-      imagePath: 'assets/images/slides/slide1.png',
+      imagePath: 'assets/images/charactor/welcome_medit.png',
     ),
   ];
 
@@ -61,11 +61,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             right: 0,
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _buildPageIndicator(),
-                ),
-                const SizedBox(height: 20),
                 if (_currentPage == _pages.length - 1)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -97,7 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildPage(OnboardingPage page) {
     return Padding(
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -111,7 +106,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 5),
           Text(
             page.description,
             textAlign: TextAlign.center,
@@ -120,33 +115,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               color: Colors.black54,
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 50),
           Image.asset(
             page.imagePath,
-            width: 460,
-            height: 360,
+            width: 500,
+            height: 400,
             fit: BoxFit.contain,
           ),
         ],
       ),
     );
-  }
-
-  List<Widget> _buildPageIndicator() {
-    List<Widget> indicators = [];
-    for (int i = 0; i < _pages.length; i++) {
-      indicators.add(
-        Container(
-          width: 8,
-          height: 8,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: i == _currentPage ? const Color(0xFF005BAC) : Colors.grey.shade300,
-          ),
-        ),
-      );
-    }
-    return indicators;
   }
 } 

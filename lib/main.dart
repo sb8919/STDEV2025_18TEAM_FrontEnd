@@ -16,7 +16,7 @@ void main() async {
   // 디버그 모드에서 isFirstTime 값 설정
   if (debugShowOnboarding) {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isFirstTime', false);
+    await prefs.setBool('isFirstTime', debugShowOnboarding);
   }
   
   // 기본 스플래시 스크린 제거
