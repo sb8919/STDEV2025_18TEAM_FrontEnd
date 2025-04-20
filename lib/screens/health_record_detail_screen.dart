@@ -3,8 +3,10 @@ import 'package:stdev2025_18team_frontend/constants/app_colors.dart';
 import '../models/health_record.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-class HealthRecordDetailScreen extends StatelessWidget {
+class HealthRecordDetailScreen extends StatefulWidget {
   final HealthRecord record;
   final DateTime date;
 
@@ -13,6 +15,30 @@ class HealthRecordDetailScreen extends StatelessWidget {
     required this.record,
     required this.date,
   }) : super(key: key);
+
+  @override
+  State<HealthRecordDetailScreen> createState() => _HealthRecordDetailScreenState();
+}
+
+class _HealthRecordDetailScreenState extends State<HealthRecordDetailScreen> {
+  String _nickname = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserNickname();
+  }
+
+  Future<void> _loadUserNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userData = prefs.getString('user_data');
+    if (userData != null) {
+      final decodedData = json.decode(userData);
+      setState(() {
+        _nickname = decodedData['nickname'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,16 +63,17 @@ class HealthRecordDetailScreen extends StatelessWidget {
           ),
           child: SafeArea(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 8.0, left: 8.0, right: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       Center(
                         child: Text(
-                          '${DateFormat('M월 d일 EEEE', 'ko_KR').format(date)}',
+                          '${DateFormat('M월 d일 EEEE', 'ko_KR').format(widget.date)}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -79,7 +106,7 @@ class HealthRecordDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('닉네임 님,',
+                    Text('$_nickname님,',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -110,7 +137,7 @@ class HealthRecordDetailScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Color(0XFFFF9500),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -123,27 +150,35 @@ class HealthRecordDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '계속 신경 쓰이는 통증이에요!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 16),
           GridView.count(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
             crossAxisCount: 4,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 1,
+            childAspectRatio: 0.8,
             children: [
               _buildSymptomItem(context, '두통', Icons.sick),
-              _buildSymptomItem(context, '딱딱통증', Icons.healing),
+              _buildSymptomItem(context, '뒷목통증', Icons.healing),
               _buildSymptomItem(context, '어지러움', Icons.motion_photos_on),
               _buildSymptomItem(context, '피곤함', Icons.nightlight_round),
             ],
+          ),
+          Divider(
+            color: Colors.white,
+            thickness: 1,
+            height: 1,
+          ),
+          SizedBox(height: 16),
+          Center(
+            child: Text(
+              '계속 신경 쓰이는 통증이에요!',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -194,64 +229,45 @@ class HealthRecordDetailScreen extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
-                SizedBox(height: 16),
-                Text(
-                  '관리 방법',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
-                  ),
-                ),
-                SizedBox(height: 8),
-                ..._getSymptomManagement(label).map((tip) => Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.check_circle_outline, 
-                        color: Color(0xFF005BAC),
-                        size: 18,
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          tip,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )).toList(),
               ],
             ),
           ),
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.grey[600]),
-            SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 5,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
+            child: Icon(
+              icon,
+              color: Color(0XFFFF9500),
+              size: 30,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -346,35 +362,20 @@ class HealthRecordDetailScreen extends StatelessWidget {
                       PieChartSectionData(
                         color: const Color(0xFF005BAC),
                         value: 60,
-                        title: '60%',
+                        title: '',
                         radius: 40,
-                        titleStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
                       ),
                       PieChartSectionData(
                         color: const Color(0xFF4C95D4),
                         value: 30,
-                        title: '30%',
+                        title: '',
                         radius: 40,
-                        titleStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
                       ),
                       PieChartSectionData(
                         color: const Color(0xFFA5CAF0),
                         value: 10,
-                        title: '10%',
+                        title: '',
                         radius: 40,
-                        titleStyle: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
                       ),
                     ],
                   ),
@@ -386,9 +387,9 @@ class HealthRecordDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildLegendItem('편두통', '60%', const Color(0xFF005BAC)),
-                    SizedBox(height: 8),
+                    SizedBox(height: 12),
                     _buildLegendItem('긴장성 두통', '30%', const Color(0xFF4C95D4)),
-                    SizedBox(height: 8),
+                    SizedBox(height: 12),
                     _buildLegendItem('기타', '10%', const Color(0xFFA5CAF0)),
                   ],
                 ),
@@ -402,10 +403,12 @@ class HealthRecordDetailScreen extends StatelessWidget {
 
   Widget _buildLegendItem(String label, String percentage, Color color) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: 12,
           height: 12,
+          margin: EdgeInsets.only(top: 4),
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
@@ -413,20 +416,27 @@ class HealthRecordDetailScreen extends StatelessWidget {
         ),
         SizedBox(width: 8),
         Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        Text(
-          percentage,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                percentage,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -434,55 +444,55 @@ class HealthRecordDetailScreen extends StatelessWidget {
   }
 
   Widget _buildRecommendationSection() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '이렇게 해보세요!',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '이렇게 해보세요!',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 16),
-          _buildRecommendationItem('수분 충분히 섭취하기'),
-          _buildRecommendationItem('8시간 이상 수면 시도'),
-          _buildRecommendationItem('2일 이상 증상 지속 시 병원 상담'),
-        ],
-      ),
+        ),
+        SizedBox(height: 16),
+        _buildRecommendationItem('수분 충분히 섭취하기'),
+        _buildRecommendationItem('8시간 이상 수면 시도'),
+        _buildRecommendationItem('2일 이상 증상 지속 시 병원 상담'),
+      ],
     );
   }
 
   Widget _buildRecommendationItem(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Container(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.thirdColor,
           borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Expanded(
-              child: Text(text),
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14,
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
 } 
