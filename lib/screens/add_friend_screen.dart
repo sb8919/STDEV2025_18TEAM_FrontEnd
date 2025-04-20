@@ -55,12 +55,29 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       final userData = await ApiService.searchUserById(_searchController.text);
       
       if (userData != null) {
+        // 지인의 리포트를 가져옵니다
+        final reports = await ApiService.getReports(_searchController.text);
+        print('\n=== Friend Reports ===');
+        print('Number of reports: ${reports.length}');
+        if (reports.isNotEmpty) {
+          print('First report:');
+          print('Title: ${reports.first.title}');
+          print('Summary: ${reports.first.summary}');
+          print('Detected symptoms: ${reports.first.detectedSymptoms.join(', ')}');
+          print('Diseases:');
+          reports.first.diseasesWithProbabilities.forEach((disease) {
+            print('  - ${disease.name}: ${disease.probability}');
+          });
+        }
+        print('===================\n');
+
         setState(() {
           _isLoading = false;
           _searchResult = {
             'nickname': userData['nickname'] ?? '',
             'relationship': '지인',
             'symptoms': List<String>.from(userData['usual_illness'] ?? []),
+            'reports': reports, // 리포트 정보를 결과에 추가
           };
         });
       } else {
@@ -70,6 +87,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         });
       }
     } catch (e) {
+      print('\n=== Error in _searchUser ===');
+      print('Error: $e');
+      print('Stack trace: ${StackTrace.current}');
+      print('===========================\n');
+      
       setState(() {
         _isLoading = false;
         _error = '오류가 발생했습니다: $e';
@@ -295,7 +317,15 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              widget.onAddFriend(_searchResult!);
+                              // 리포트 정보를 포함하여 지인 정보를 전달
+                              final friendData = {
+                                ..._searchResult!,
+                                'reports': _searchResult!['reports'],
+                                'diseases': _searchResult!['reports'].isNotEmpty 
+                                  ? _searchResult!['reports'].first.diseasesWithProbabilities
+                                  : [],
+                              };
+                              widget.onAddFriend(friendData);
                               Navigator.of(context).pop();
                             },
                             child: Container(

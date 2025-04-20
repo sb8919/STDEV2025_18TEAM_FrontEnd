@@ -135,4 +135,24 @@ class SymptomService {
       throw Exception('Failed to fetch disease reports');
     }
   }
+
+  Future<List<String>> getSymptomFeelings(String loginId, Set<String> bodyParts, String symptom) async {
+    try {
+      // For now, we'll return a combined list of feelings from all selected body parts
+      List<String> allFeelings = [];
+      for (var bodyPart in bodyParts) {
+        BodyPart? part = BodyPart.values.firstWhere(
+          (p) => p.toString().split('.').last == bodyPart,
+          orElse: () => BodyPart.head, // Default to head if not found
+        );
+        if (bodyPartFeelings.containsKey(part)) {
+          allFeelings.addAll(bodyPartFeelings[part]!);
+        }
+      }
+      return allFeelings.toSet().toList(); // Remove duplicates
+    } catch (e) {
+      print('Error getting symptom feelings: $e');
+      return [];
+    }
+  }
 } 

@@ -251,7 +251,13 @@ class _ProfileSectionState extends State<ProfileSection> {
                 onToggle: () => widget.onToggleMemberDetail(mainProfile),
                 showAllProfiles: widget.isExpanded,
                 onShowAllToggle: widget.onToggleExpanded,
-                onMemberUpdate: widget.onMemberUpdate,
+                onMemberUpdate: (updatedMember) {
+                  // 메인 프로필 업데이트 시 전체 멤버 목록에서 해당 멤버를 찾아 업데이트
+                  final index = widget.members.indexWhere((m) => m.isMainProfile);
+                  if (index != -1) {
+                    widget.onMemberUpdate(updatedMember);
+                  }
+                },
               ),
             ),
             const Padding(

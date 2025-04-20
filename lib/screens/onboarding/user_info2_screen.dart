@@ -266,45 +266,40 @@ class _UserInfo2ScreenState extends State<UserInfo2Screen> {
       final member = {
         'login_id': userInfo.loginId,
         'nickname': userInfo.nickname,
-        'password': 'default123',
         'age_range': ageRange,
         'gender': userInfo.gender,
         'usual_illness': userInfo.symptoms,
       };
 
-      final response = await ApiService.registerUser(member);
-      if (response != null) {
-        final prefs = await SharedPreferences.getInstance();
-        final userData = {
-          'loginId': userInfo.loginId,
-          'nickname': userInfo.nickname,
-          'gender': userInfo.gender,
-          'age': userInfo.age,
-          'ageRange': ageRange,
-          'symptoms': userInfo.symptoms,
-        };
-        await prefs.setString('user_data', json.encode(userData));
-        await prefs.setBool('isFirstTime', false);
-        await prefs.setBool('is_onboarding_completed', true);
-        await prefs.setString('login_id', userInfo.loginId);
+      await ApiService.registerUser(member);
+      
+      final prefs = await SharedPreferences.getInstance();
+      final userData = {
+        'loginId': userInfo.loginId,
+        'nickname': userInfo.nickname,
+        'gender': userInfo.gender,
+        'age': userInfo.age,
+        'ageRange': ageRange,
+        'symptoms': userInfo.symptoms,
+      };
+      await prefs.setString('user_data', json.encode(userData));
+      await prefs.setBool('isFirstTime', false);
+      await prefs.setBool('is_onboarding_completed', true);
+      await prefs.setString('login_id', userInfo.loginId);
 
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-                (route) => false,
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('회원가입에 실패했습니다. 다시 시도해주세요.'), duration: Duration(seconds: 2)),
-          );
-        }
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('오류가 발생했습니다. 다시 시도해주세요.'), duration: Duration(seconds: 2)),
+          const SnackBar(
+            content: Text('회원가입에 실패했습니다. 다시 시도해주세요.'),
+            duration: Duration(seconds: 2)
+          ),
         );
       }
     }

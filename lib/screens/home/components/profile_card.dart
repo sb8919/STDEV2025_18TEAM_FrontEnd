@@ -36,6 +36,7 @@ class _ProfileCardState extends State<ProfileCard> {
   late String _selectedGender;
 
   final List<String> _relationships = [
+    '본인',
     '미성년 자녀',
     '가족',
     '부모',
@@ -45,6 +46,12 @@ class _ProfileCardState extends State<ProfileCard> {
     '친척',
     '친구',
     '지인',
+  ];
+
+  final List<String> _genders = [
+    '남성',
+    '여성',
+    '기타',
   ];
 
   @override
@@ -67,9 +74,21 @@ class _ProfileCardState extends State<ProfileCard> {
     _ageController = TextEditingController(text: widget.member.age.toString());
     _genderController = TextEditingController(text: widget.member.gender);
     _symptomsController = TextEditingController(text: widget.member.symptoms.join(', '));
+    
     _selectedRelationship = widget.member.relationship;
+    if (!_relationships.contains(_selectedRelationship)) {
+      _selectedRelationship = widget.member.isMainProfile ? '본인' : '지인';
+    }
+    
     _isMainProfile = widget.member.isMainProfile;
+    
     _selectedGender = widget.member.gender;
+    // 성별을 드롭다운에 맞게 매핑
+    if (_selectedGender == '남') _selectedGender = '남성';
+    else if (_selectedGender == '여') _selectedGender = '여성';
+    if (!_genders.contains(_selectedGender)) {
+      _selectedGender = '기타';
+    }
   }
 
   void _toggleEdit() {
@@ -77,37 +96,43 @@ class _ProfileCardState extends State<ProfileCard> {
       if (_isEditing) {
         // Save changes
         _handleProfileUpdate();
-      }
-      _isEditing = !_isEditing;
-      if (_isEditing) {
+      } else {
+        // Enter edit mode
         _initializeControllers();
       }
+      _isEditing = !_isEditing;
     });
   }
 
   void _handleProfileUpdate() {
-    if (_nicknameController.text.isEmpty ||
-        _ageController.text.isEmpty ||
-        _symptomsController.text.isEmpty) {
+    if (_nicknameController.text.isEmpty) {
       return;
     }
 
+    // 성별 변환
+    String apiGender = _selectedGender;
+    if (_selectedGender == '남성') apiGender = '남';
+    else if (_selectedGender == '여성') apiGender = '여';
+    else if (_selectedGender == '기타') apiGender = '기타';
+
     final updatedMember = Member(
       nickname: _nicknameController.text,
-      gender: _selectedGender,
-      age: int.tryParse(_ageController.text) ?? 0,
-      symptoms: _symptomsController.text
-          .split(',')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList(),
+      gender: apiGender,
+      age: int.tryParse(_ageController.text) ?? widget.member.age,
+      symptoms: _symptomsController.text.isEmpty 
+          ? widget.member.symptoms 
+          : _symptomsController.text
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList(),
       relationship: _selectedRelationship,
       isMainProfile: _isMainProfile,
       acquaintances: widget.member.acquaintances,
       healthMetrics: widget.member.healthMetrics,
       loginId: widget.member.loginId,
       password: widget.member.password,
-      ageRange: '${(int.tryParse(_ageController.text) ?? 0) ~/ 10 * 10}-${(int.tryParse(_ageController.text) ?? 0) ~/ 10 * 10 + 9}',
+      ageRange: '${(int.tryParse(_ageController.text) ?? widget.member.age) ~/ 10 * 10}-${(int.tryParse(_ageController.text) ?? widget.member.age) ~/ 10 * 10 + 9}',
     );
 
     widget.onMemberUpdate(updatedMember);
@@ -270,20 +295,47 @@ class _ProfileCardState extends State<ProfileCard> {
                         ),
                       ),
                     )
-                  : TextField(
-                      controller: controller,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                        suffix: suffix != null ? Text(suffix) : null,
-                        hintText: hint,
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                      style: const TextStyle(fontSize: 14),
-                    )
+                  : label == '성별'
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedGender,
+                              isExpanded: true,
+                              items: _genders.map((String gender) {
+                                return DropdownMenuItem<String>(
+                                  value: gender,
+                                  child: Text(gender),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    _selectedGender = newValue;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        )
+                      : TextField(
+                          controller: controller,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                            suffix: suffix != null ? Text(suffix) : null,
+                            hintText: hint,
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                          style: const TextStyle(fontSize: 14),
+                        )
               : Text(
                   value,
                   style: const TextStyle(fontSize: 14),

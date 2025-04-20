@@ -16,6 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../repositories/acquaintance_repository.dart';
 import 'components/profile_section.dart';
+import '../../models/report.dart';
+import '../../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,6 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isExpanded = false;
   Member? _selectedMember;
   final _acquaintanceRepository = AcquaintanceRepository();
+  List<Report> _reports = [];
+  List<DiseaseProbability> _diseaseProbabilities = [];
 
   // 프로필 추가를 위한 컨트롤러들
   final TextEditingController _newNicknameController = TextEditingController();
@@ -159,9 +163,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserInfo();
+    print('\n=== HomeScreen initState ===');
     _selectedDate = DateTime.now();
     _startOfWeek = _selectedDate.subtract(Duration(days: _selectedDate.weekday));
+    _loadUserInfo().then((_) {
+      print('\n=== User Info Loaded ===');
+      print('Members count: ${_members.length}');
+      if (_members.isNotEmpty) {
+        print('First member: ${_members.first.nickname} (${_members.first.loginId})');
+      }
+      _loadReports();
+    });
   }
 
   Future<void> _loadUserInfo() async {
@@ -173,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final userDataString = prefs.getString('user_data');
         if (userDataString != null) {
           final userData = jsonDecode(userDataString);
+          print('Loaded user data: $userData');
           
           setState(() {
             _nickname = userData['nickname'] ?? '';
@@ -184,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
             
             if (existingMemberIndex == -1) {
               // 등록된 사용자가 없으면 새로 추가
-              _members.insert(0, Member(
+              final newMember = Member(
                 nickname: userData['nickname'] ?? '',
                 gender: userData['gender'] ?? '여',
                 age: int.tryParse(userData['ageRange']?.split('-')[0] ?? '0') ?? 0,
@@ -204,7 +217,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-              ));
+              );
+              print('Adding new member: ${newMember.nickname}');
+              _members.insert(0, newMember);
               
               // 기존 멤버들의 isMainProfile을 false로 설정
               for (int i = 1; i < _members.length; i++) {
@@ -212,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             } else {
               // 등록된 사용자가 이미 있으면 정보 업데이트
+              print('Updating existing member: ${userData['nickname']}');
               _members[existingMemberIndex] = _members[existingMemberIndex].copyWith(
                 nickname: userData['nickname'] ?? '',
                 gender: userData['gender'] ?? '여',
@@ -228,7 +244,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               }
             }
+            print('Current members count: ${_members.length}');
           });
+        } else {
+          print('No user data found in SharedPreferences');
         }
       } catch (e) {
         print('Error loading user data: $e');
@@ -239,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } else {
+      print('Onboarding not completed');
       // 온보딩이 완료되지 않은 경우 온보딩 화면으로 이동
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -322,7 +342,11 @@ class _HomeScreenState extends State<HomeScreen> {
       age: userData['age'] ?? 25,
       gender: userData['gender'] ?? '남',
       healthMetrics: HealthMetrics(
-        metrics: [
+        metrics: userData['diseases']?.map<MetricData>((disease) => MetricData(
+          name: disease.name,
+          value: disease.probability,
+          severityLevel: _getSeverityLevel(disease.probability),
+        )).toList() ?? [
           MetricData(
             name: '건강상태',
             value: 0.7,
@@ -503,25 +527,55 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _loadMainMember() async {
+  Future<void> _loadReports() async {
+    print('\n=== Loading Reports ===');
     try {
+      if (_members.isEmpty) {
+        print('No members available to load reports');
+        return;
+      }
+
+      print('Available members:');
+      _members.forEach((member) {
+        print('- ${member.nickname} (${member.loginId}) - Main Profile: ${member.isMainProfile}');
+      });
+
       final mainMember = _members.firstWhere(
         (member) => member.isMainProfile,
-        orElse: () => _members.first,
+        orElse: () {
+          print('No main profile found, using first member');
+          return _members.first;
+        },
       );
       
-      final updatedAcquaintances = await _acquaintanceRepository.getAcquaintances(mainMember.loginId);
+      print('Selected member for reports: ${mainMember.nickname} (${mainMember.loginId})');
+      
+      final reports = await ApiService.getReports(mainMember.loginId);
+      print('Reports loaded successfully: ${reports.length} reports found');
+      
+      if (reports.isNotEmpty) {
+        print('First report details:');
+        print('Title: ${reports.first.title}');
+        print('Summary: ${reports.first.summary}');
+        print('Detected symptoms: ${reports.first.detectedSymptoms.join(', ')}');
+        print('Diseases with probabilities:');
+        reports.first.diseasesWithProbabilities.forEach((disease) {
+          print('  - ${disease.name}: ${disease.probability}');
+        });
+      }
       
       setState(() {
-        final mainMemberIndex = _members.indexWhere((member) => member.isMainProfile);
-        if (mainMemberIndex != -1) {
-          _members[mainMemberIndex] = mainMember.copyWith(
-            acquaintances: updatedAcquaintances,
-          );
+        _reports = reports;
+        if (reports.isNotEmpty) {
+          _diseaseProbabilities = reports.first.diseasesWithProbabilities;
+          print('Disease probabilities set in state: ${_diseaseProbabilities.map((d) => '${d.name}: ${d.probability}').join(', ')}');
         }
       });
-    } catch (e) {
-      print('Error loading main member: $e');
+    } catch (e, stackTrace) {
+      print('\n=== Error in _loadReports ===');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
+      print('===========================\n');
     }
   }
 
@@ -647,6 +701,100 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildDiseaseProbabilityChart() {
+    if (_diseaseProbabilities.isEmpty) {
+      return Container(); // 데이터가 없으면 빈 컨테이너 반환
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: _diseaseProbabilities.map((disease) {
+              return _buildProbabilityBar(
+                disease.name,
+                disease.probability,
+                _getSeverityColor(_getSeverityLevel(disease.probability)),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _getSeverityLevel(double probability) {
+    if (probability >= 0.7) return 3;
+    if (probability >= 0.4) return 2;
+    return 1;
+  }
+
+  Widget _buildProbabilityBar(String label, double value, Color color) {
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: 24,
+              height: 80 * value,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: 32,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF868686),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${(value * 100).toStringAsFixed(1)}%',
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF868686),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -678,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onInfoUpdated: _handleInfoUpdate,
                         onDelete: _handleAcquaintanceDelete,
                       ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
                     Text(
                       '${_nickname}님, 요즘 궁금할 만한 것들을 알려드릴게요!',
                       style: const TextStyle(
@@ -691,7 +839,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: newsList.length,
-                      itemBuilder: (context, index) => NewsCard(news: newsList[index]),
+                      itemBuilder: (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: GestureDetector(
+                          onTap: () => _showNewsDetailModal(context, newsList[index]),
+                          child: NewsCard(news: newsList[index]),
+                        ),
+                      ),
                     ),
                   ],
                 ),
